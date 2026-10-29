@@ -160,6 +160,11 @@ enum Palette {
     static let navy = Color(red: 0.055, green: 0.085, blue: 0.32)
     static let muted = Color(red: 0.47, green: 0.50, blue: 0.61)
     static let panel = Color(red: 0.953, green: 0.961, blue: 0.993)
+    static let bottleTop = Color(red: 0.92, green: 0.95, blue: 1.0)
+    static let bottleBottom = Color(red: 0.84, green: 0.89, blue: 0.98)
+    static let bottleStroke = Color(red: 0.75, green: 0.82, blue: 0.96)
+    static let bottleGradient = LinearGradient(colors: [bottleTop, .white, bottleBottom],
+                                                startPoint: .topLeading, endPoint: .bottomTrailing)
     static let gradient = LinearGradient(colors: [blueBright, blue], startPoint: .topLeading, endPoint: .bottomTrailing)
 }
 

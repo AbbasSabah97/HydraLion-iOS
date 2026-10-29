@@ -30,7 +30,7 @@ struct RemindersView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 35) {
+            VStack(spacing: 24) {
                 VStack(spacing: 0) {
                     HStack {
                         VStack(alignment: .leading, spacing: 5) {
@@ -45,7 +45,7 @@ struct RemindersView: View {
                             .tint(Palette.blue)
                     }
                     .padding(.horizontal, 20)
-                    .frame(height: 84)
+                     .frame(height: 96)
                     Divider().opacity(0.5)
                     HStack {
                         Text("Interval")
@@ -84,14 +84,14 @@ struct RemindersView: View {
                     }
                     .padding(.horizontal, 20).frame(height: 68)
                 }
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundStyle(Palette.navy)
-                .background(.white, in: RoundedRectangle(cornerRadius: 21))
-                .overlay(RoundedRectangle(cornerRadius: 21).stroke(Palette.panel, lineWidth: 2))
+                .background(.white, in: RoundedRectangle(cornerRadius: 24))
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(Palette.panel, lineWidth: 2))
 
                 VStack(spacing: 0) {
                     Text("Notifications")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 20).frame(height: 66)
                     Divider().opacity(0.5)
@@ -136,11 +136,11 @@ struct RemindersView: View {
                 }
                 .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(Palette.navy)
-                .background(.white, in: RoundedRectangle(cornerRadius: 21))
-                .overlay(RoundedRectangle(cornerRadius: 21).stroke(Palette.panel, lineWidth: 2))
+                .background(.white, in: RoundedRectangle(cornerRadius: 24))
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(Palette.panel, lineWidth: 2))
             }
             .padding(.horizontal, 18)
-            .padding(.top, 25)
+            .padding(.top, 24)
             .padding(.bottom, 20)
         }
         .scrollIndicators(.hidden)

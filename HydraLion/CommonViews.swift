@@ -34,24 +34,14 @@ struct SectionHeader: View {
 
 struct MascotView: View {
     var pose: String = "MascotIdle"
-    var animateBlink = false
-    @State private var blinking = false
 
     var body: some View {
-        Image(blinking ? "MascotBlink" : pose)
+        // Exactly one original transparent asset is rendered; overlapping poses are disabled.
+        Image(pose)
             .resizable()
+            .interpolation(.high)
             .scaledToFit()
             .accessibilityLabel("HydraLion mascot")
-            .task(id: animateBlink) {
-                guard animateBlink else { return }
-                while !Task.isCancelled {
-                    try? await Task.sleep(nanoseconds: 5_000_000_000)
-                    if Task.isCancelled { break }
-                    blinking = true
-                    try? await Task.sleep(nanoseconds: 220_000_000)
-                    blinking = false
-                }
-            }
     }
 }
 
@@ -65,7 +55,8 @@ struct RoundPrimaryButton: View {
                 .font(.system(size: size * 0.39, weight: .regular))
                 .foregroundStyle(.white)
                 .frame(width: size, height: size)
-                .background(Palette.gradient, in: Circle())
+                 .background(Palette.gradient, in: Circle())
+                .shadow(color: Palette.blue.opacity(0.25), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
     }
@@ -74,27 +65,33 @@ struct RoundPrimaryButton: View {
 struct BottomTabBar: View {
     @Binding var selection: Tab
     enum Tab { case home, reminders }
+
     var body: some View {
         HStack {
-            Button { selection = .home } label: {
-                Image(systemName: "drop")
-                    .font(.system(size: 28, weight: .regular))
-                    .foregroundStyle(selection == .home ? Color.white : Palette.navy.opacity(0.8))
-                    .frame(width: 66, height: 66)
-                    .background(selection == .home ? Palette.navy.opacity(0.75) : Color.clear, in: Circle())
-            }
             Spacer()
-            Button { selection = .reminders } label: {
-                Image(systemName: "power")
-                    .font(.system(size: 30, weight: .medium))
-                    .foregroundStyle(selection == .reminders ? Color.white : Palette.navy.opacity(0.8))
-                    .frame(width: 66, height: 66)
-                    .background(selection == .reminders ? Palette.navy.opacity(0.75) : Color.clear, in: Circle())
-            }
+            tabButton("drop", selected: selection == .home) { selection = .home }
+            Spacer()
+            tabButton("power", selected: selection == .reminders) { selection = .reminders }
+            Spacer()
         }
-        .padding(.horizontal, 62)
-        .padding(.bottom, 4)
+        .padding(.top, 8)
+        .padding(.bottom, 7)
         .background(.white)
+        .overlay(alignment: .top) {
+            Rectangle().fill(Palette.panel).frame(height: 1)
+        }
+    }
+
+    private func tabButton(_ symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 29, weight: .regular))
+                .foregroundStyle(selected ? Color.white : Palette.navy.opacity(0.82))
+                .frame(width: 66, height: 66)
+                .background(selected ? Palette.navy.opacity(0.78) : Color.clear, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(symbol == "drop" ? "Home" : "Reminders")
     }
 }
 
@@ -109,6 +106,25 @@ struct PrimaryButton: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 66)
                 .background(Palette.gradient, in: Capsule())
+                .shadow(color: Palette.blue.opacity(0.24), radius: 14, y: 7)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct HomeShortcutButton: View {
+    let title: String
+    let symbol: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: symbol)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(Palette.navy)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .background(Palette.panel, in: RoundedRectangle(cornerRadius: 17))
         }
         .buttonStyle(.plain)
     }

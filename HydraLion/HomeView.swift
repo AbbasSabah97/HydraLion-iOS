@@ -56,8 +56,7 @@ struct HomeView: View {
                 let h = geo.size.height
                 ZStack(alignment: .top) {
                     BottleShape()
-                        .fill(LinearGradient(colors: [Palette.panel, .white, Palette.panel],
-                                             startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .fill(Palette.bottleGradient)
                         .overlay(alignment: .bottom) {
                             GeometryReader { bottle in
                                 let fillHeight = max(0, bottle.size.height * CGFloat(store.progressToday))
@@ -71,10 +70,14 @@ struct HomeView: View {
                             }
                             .clipShape(BottleShape())
                         }
+                        .overlay {
+                            BottleShape().stroke(Palette.bottleStroke, lineWidth: 2.5)
+                        }
+                        .shadow(color: Palette.navy.opacity(0.08), radius: 14, y: 6)
                     // These are the original transparent mascot assets supplied by the user.
-                    MascotView(animateBlink: true)
-                        .frame(width: w * 0.95, height: h * 0.56)
-                        .position(x: w / 2, y: h * 0.60)
+                    MascotView(pose: "MascotIdle")
+                        .frame(width: w * 0.66, height: h * 0.38)
+                        .position(x: w / 2, y: h * 0.54)
                         .accessibilityHidden(true)
                     VStack(spacing: 6) {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -119,18 +122,11 @@ struct HomeView: View {
             .padding(.top, 68)
             .padding(.bottom, 9)
             HStack(spacing: 12) {
-                Button(action: onHistory) {
-                    Label("History", systemImage: "clock.arrow.circlepath")
-                }
-                Spacer()
-                Button(action: onStats) {
-                    Label("Progress", systemImage: "chart.donut")
-                }
+                HomeShortcutButton(title: "History", symbol: "clock.arrow.circlepath", action: onHistory)
+                HomeShortcutButton(title: "Progress", symbol: "chart.donut", action: onStats)
             }
-            .font(.system(size: 14, weight: .medium))
-            .foregroundStyle(Palette.navy)
-            .padding(.horizontal, 38)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 8)
         }
         .onAppear {
             withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false)) { phase = .pi * 2 }

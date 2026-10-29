@@ -12,7 +12,7 @@ struct AddDrinkView: View {
         VStack(spacing: 0) {
             SectionHeader(title: "Add Drink", showBack: true, onBack: onBack, onMenu: onGoal)
             Spacer(minLength: 12)
-            HStack(alignment: .top, spacing: 0) {
+            HStack(alignment: .top, spacing: 6) {
                 ForEach(DrinkKind.allCases) { drink in
                     Button { withAnimation(.easeInOut(duration: 0.18)) { kind = drink } } label: {
                         VStack(spacing: 9) {
@@ -20,7 +20,7 @@ struct AddDrinkView: View {
                                 .font(.system(size: 24, weight: .medium))
                                 .foregroundStyle(kind == drink ? .white : drink.accent)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 58)
+                                .frame(height: 62)
                                 .background(kind == drink ? Palette.gradient : LinearGradient(colors: [drink.soft, drink.soft], startPoint: .top, endPoint: .bottom),
                                             in: Circle())
                             Text(drink.title)
@@ -45,7 +45,7 @@ struct AddDrinkView: View {
                 Spacer()
                 amountButton("plus") { amount = min(3000, amount + 50) }
             }
-            .padding(.horizontal, 45)
+            .padding(.horizontal, 32)
             .padding(.bottom, 20)
             HStack(spacing: 10) {
                 ForEach([150, 250, 330, 500], id: \.self) { preset in
@@ -84,7 +84,7 @@ struct AddDrinkView: View {
             Image(systemName: symbol)
                 .font(.system(size: 25, weight: .medium))
                 .foregroundStyle(Palette.blue)
-                .frame(width: 55, height: 55)
+                .frame(width: 68, height: 68)
                 .background(Palette.panel, in: Circle())
         }
         .buttonStyle(.plain)

@@ -17,15 +17,27 @@ struct HistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             SectionHeader(title: "History", showBack: true, onBack: onBack, onMenu: onGoal)
-            Picker("Period", selection: $period) {
-                Text("Day").tag(0)
-                Text("Week").tag(1)
-                Text("Month").tag(2)
+            HStack(spacing: 0) {
+                ForEach(0..<3, id: \.self) { value in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.18)) { period = value }
+                    } label: {
+                        Text(["Day", "Week", "Month"][value])
+                            .font(.system(size: 17, weight: period == value ? .semibold : .medium, design: .rounded))
+                            .foregroundStyle(period == value ? Palette.navy : Palette.muted)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(period == value ? Color.white : Color.clear,
+                                        in: RoundedRectangle(cornerRadius: 22))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 28)
+            .padding(4)
+            .background(Palette.panel, in: RoundedRectangle(cornerRadius: 24))
+            .padding(.horizontal, 24)
             .padding(.top, 22)
-            .padding(.bottom, 22)
+            .padding(.bottom, 20)
             if period == 0 {
                 HStack(spacing: 0) {
                     ForEach(weekDates, id: \.self) { date in
@@ -39,7 +51,7 @@ struct HistoryView: View {
                             }
                             .foregroundStyle(selected ? .white : Palette.muted)
                             .frame(maxWidth: .infinity)
-                            .frame(height: 76)
+                            .frame(height: 86)
                             .background(selected ? Palette.gradient : LinearGradient(colors: [.clear,.clear], startPoint: .top, endPoint: .bottom),
                                         in: RoundedRectangle(cornerRadius: 17))
                         }
@@ -94,7 +106,7 @@ struct HistoryView: View {
                 .frame(width: 62, height: 62)
                 .background(entry.kind.soft, in: Circle())
             VStack(alignment: .leading, spacing: 5) {
-                Text(entry.kind.historyTitle).font(.system(size: 17, weight: .medium))
+                Text(entry.kind.historyTitle).font(.system(size: 18, weight: .medium, design: .rounded))
                 Text(entry.milliliters.milliliterLabel).font(.system(size: 17))
             }
             .foregroundStyle(Palette.navy)
@@ -114,10 +126,10 @@ struct HistoryView: View {
             }
             .accessibilityLabel("Entry actions")
         }
-        .padding(.horizontal, 12)
-        .frame(height: 85)
+        .padding(.horizontal, 17)
+        .frame(height: 98)
         .frame(maxWidth: .infinity)
-        .background(Palette.panel, in: RoundedRectangle(cornerRadius: 21))
+        .background(Palette.panel, in: RoundedRectangle(cornerRadius: 22))
         .padding(.bottom, 9)
     }
 
