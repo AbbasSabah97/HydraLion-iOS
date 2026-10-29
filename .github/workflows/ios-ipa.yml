@@ -3,11 +3,15 @@ name: HydraLion iOS IPA
 on:
   push:
     paths:
-      - 'ios/**'
+      - 'HydraLion/**'
+      - 'HydraLion.xcodeproj/**'
+      - 'DesignReferences/**'
       - '.github/workflows/ios-ipa.yml'
   pull_request:
     paths:
-      - 'ios/**'
+      - 'HydraLion/**'
+      - 'HydraLion.xcodeproj/**'
+      - 'DesignReferences/**'
       - '.github/workflows/ios-ipa.yml'
   workflow_dispatch:
 
@@ -18,13 +22,13 @@ jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 45
-    defaults:
-      run:
-        working-directory: ios
     steps:
       - uses: actions/checkout@v4
       - name: Select Xcode and report version
-        run: xcodebuild -version
+        run: |
+          xcodebuild -version
+          test -d HydraLion.xcodeproj
+          test -d HydraLion/Assets.xcassets
       - name: Verify uploaded character images
         run: |
           for name in MascotIdle MascotBlink MascotDrink MascotCheers MascotSurprised MascotRelax; do
@@ -52,13 +56,12 @@ jobs:
           cd .build
           /usr/bin/zip -qry HydraLion-UNSIGNED.ipa Payload
           unzip -l HydraLion-UNSIGNED.ipa | grep -F 'Payload/HydraLion.app/'
-      - name: Upload IPA and archive
+      - name: Upload IPA for subsequent signing
         uses: actions/upload-artifact@v4
         with:
           name: HydraLion-iOS-unsigned
           path: |
-            ios/.build/HydraLion-UNSIGNED.ipa
-            ios/.build/HydraLion.xcarchive/**
+            .build/HydraLion-UNSIGNED.ipa
           include-hidden-files: true
           retention-days: 30
       - name: Upload diagnostics on failure
@@ -66,5 +69,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HydraLion-build-diagnostics
-          path: ios/*.log
+          path: |
+            .build-simulator.log
+            .build-device.log
           if-no-files-found: ignore
