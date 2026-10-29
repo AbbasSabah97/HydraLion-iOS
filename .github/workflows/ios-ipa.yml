@@ -1,0 +1,70 @@
+name: HydraLion iOS IPA
+
+on:
+  push:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ipa.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-ipa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode and report version
+        run: xcodebuild -version
+      - name: Verify uploaded character images
+        run: |
+          for name in MascotIdle MascotBlink MascotDrink MascotCheers MascotSurprised MascotRelax; do
+            test -s "HydraLion/Assets.xcassets/$name.imageset/$name.png" || {
+              echo "Missing $name.png (use the complete zip provided with the app)"; exit 1;
+            }
+          done
+      - name: Build for iOS simulator (compile check)
+        run: |
+          set -o pipefail
+          xcodebuild -project HydraLion.xcodeproj -scheme HydraLion -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO build | tee .build-simulator.log
+      - name: Archive iOS device app (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild -project HydraLion.xcodeproj -scheme HydraLion -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath .build/HydraLion.xcarchive \
+            CODE_SIGNING_ALLOWED=NO archive | tee .build-device.log
+      - name: Package unsigned IPA for subsequent signing
+        run: |
+          set -euo pipefail
+          mkdir -p .build/Payload
+          cp -R .build/HydraLion.xcarchive/Products/Applications/HydraLion.app .build/Payload/
+          cd .build
+          /usr/bin/zip -qry HydraLion-UNSIGNED.ipa Payload
+          unzip -l HydraLion-UNSIGNED.ipa | grep -F 'Payload/HydraLion.app/'
+      - name: Upload IPA and archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: HydraLion-iOS-unsigned
+          path: |
+            ios/.build/HydraLion-UNSIGNED.ipa
+            ios/.build/HydraLion.xcarchive/**
+          include-hidden-files: true
+          retention-days: 30
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HydraLion-build-diagnostics
+          path: ios/*.log
+          if-no-files-found: ignore
