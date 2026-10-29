@@ -64,34 +64,72 @@ struct RoundPrimaryButton: View {
 
 struct BottomTabBar: View {
     @Binding var selection: Tab
-    enum Tab { case home, reminders }
 
-    var body: some View {
-        HStack {
-            Spacer()
-            tabButton("drop", selected: selection == .home) { selection = .home }
-            Spacer()
-            tabButton("power", selected: selection == .reminders) { selection = .reminders }
-            Spacer()
+    enum Tab: CaseIterable {
+        case home, history, progress, reminders
+
+        var symbol: String {
+            switch self {
+            case .home: return "drop"
+            case .history: return "clock.arrow.circlepath"
+            case .progress: return "chart.bar"
+            case .reminders: return "bell"
+            }
         }
-        .padding(.top, 8)
-        .padding(.bottom, 7)
-        .background(.white)
-        .overlay(alignment: .top) {
-            Rectangle().fill(Palette.panel).frame(height: 1)
+
+        var selectedSymbol: String {
+            switch self {
+            case .home: return "drop.fill"
+            case .history: return "clock.arrow.circlepath"
+            case .progress: return "chart.bar.fill"
+            case .reminders: return "bell.fill"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .home: return "Home"
+            case .history: return "History"
+            case .progress: return "Progress"
+            case .reminders: return "Reminders"
+            }
         }
     }
 
-    private func tabButton(_ symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 29, weight: .regular))
-                .foregroundStyle(selected ? Color.white : Palette.navy.opacity(0.82))
-                .frame(width: 66, height: 66)
-                .background(selected ? Palette.navy.opacity(0.78) : Color.clear, in: Circle())
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.16)) {
+                        selection = tab
+                    }
+                } label: {
+                    Image(systemName: selection == tab ? tab.selectedSymbol : tab.symbol)
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(selection == tab ? Color.white : Palette.navy.opacity(0.76))
+                        .frame(width: 44, height: 44)
+                        .background {
+                            if selection == tab {
+                                Circle().fill(Palette.gradient)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tab.title)
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(symbol == "drop" ? "Home" : "Reminders")
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+        .background(Color.white)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Palette.panel)
+                .frame(height: 1)
+        }
     }
 }
 

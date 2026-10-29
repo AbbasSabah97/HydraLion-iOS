@@ -43,8 +43,6 @@ struct WaterWave: Shape {
 struct HomeView: View {
     @EnvironmentObject private var store: HydrationStore
     let onAdd: () -> Void
-    let onStats: () -> Void
-    let onHistory: () -> Void
     let onGoal: () -> Void
     @State private var phase: CGFloat = 0
 
@@ -121,12 +119,7 @@ struct HomeView: View {
             .padding(.horizontal, 20)
             .padding(.top, 68)
             .padding(.bottom, 9)
-            HStack(spacing: 12) {
-                HomeShortcutButton(title: "History", symbol: "clock.arrow.circlepath", action: onHistory)
-                HomeShortcutButton(title: "Progress", symbol: "chart.donut", action: onStats)
-            }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 8)
+
         }
         .onAppear {
             withAnimation(.linear(duration: 2.4).repeatForever(autoreverses: false)) { phase = .pi * 2 }
