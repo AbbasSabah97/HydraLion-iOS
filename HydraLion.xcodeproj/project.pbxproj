@@ -1,0 +1,169 @@
+// !$*UTF8*$!
+{
+    archiveVersion = 1;
+    classes = {};
+    objectVersion = 56;
+    objects = {
+        EC553E7FBC3AD0AD7AB94BDF /* PBXProject */ = { isa = PBXProject; attributes = { BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1600; TargetAttributes = { 7C520E5769F7D426CD5D3DD8 = { CreatedOnToolsVersion = 16.0; }; }; }; buildConfigurationList = A368BE0D94595B66655CAADA /* Project Configuration List */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 0BB0765602CC9BA993BEA866 /* Main Group */; productRefGroup = 4EDC8BFAFC6BD936B849F38C /* Products */; projectDirPath = ""; projectRoot = ""; targets = (7C520E5769F7D426CD5D3DD8 /* HydraLion target */,); };
+        07896AEDCD72FD8F3C45635E /* FileRef AddDrinkView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddDrinkView.swift; sourceTree = "<group>"; };
+        BB6EE92C22CE890C8241A986 /* FileRef CommonViews.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonViews.swift; sourceTree = "<group>"; };
+        36571F0DDCB21D3C6A326DD9 /* FileRef HistoryView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+        2078FB7087EFFA840D6DB246 /* FileRef HomeView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+        CD8150212594EEF003166C37 /* FileRef HydraLionApp.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydraLionApp.swift; sourceTree = "<group>"; };
+        E5159BD3546B826F282AAEE0 /* FileRef HydrationStore.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydrationStore.swift; sourceTree = "<group>"; };
+        A467CE5C9BBF911F3CA8F648 /* FileRef RemindersView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersView.swift; sourceTree = "<group>"; };
+        F6A0565656563F150009283A /* FileRef RootView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+        1B0A8C214569B6C35BFB546C /* FileRef StatisticsView.swift */ = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
+        795A02A63DC9C1E86758E98F /* Assets.xcassets */ = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+        27AE66AC03A7D34202836C1F /* HydraLion.app */ = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HydraLion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        248BEF368498957ED830A1C2 /* PBXBuildFile AddDrinkView.swift */ = { isa = PBXBuildFile; fileRef = 07896AEDCD72FD8F3C45635E /* FileRef AddDrinkView.swift */; };
+        450AE5CA851C35C21876FBB9 /* PBXBuildFile CommonViews.swift */ = { isa = PBXBuildFile; fileRef = BB6EE92C22CE890C8241A986 /* FileRef CommonViews.swift */; };
+        E5DEEEDB8B38C2A315138F2D /* PBXBuildFile HistoryView.swift */ = { isa = PBXBuildFile; fileRef = 36571F0DDCB21D3C6A326DD9 /* FileRef HistoryView.swift */; };
+        2935E9495F2C08179E795E02 /* PBXBuildFile HomeView.swift */ = { isa = PBXBuildFile; fileRef = 2078FB7087EFFA840D6DB246 /* FileRef HomeView.swift */; };
+        ED3B0EA77F5D2F407AF6FF58 /* PBXBuildFile HydraLionApp.swift */ = { isa = PBXBuildFile; fileRef = CD8150212594EEF003166C37 /* FileRef HydraLionApp.swift */; };
+        EEF22BD1F628DF6B7DB3F0F4 /* PBXBuildFile HydrationStore.swift */ = { isa = PBXBuildFile; fileRef = E5159BD3546B826F282AAEE0 /* FileRef HydrationStore.swift */; };
+        2B41DD9E10E28B20846A1E3D /* PBXBuildFile RemindersView.swift */ = { isa = PBXBuildFile; fileRef = A467CE5C9BBF911F3CA8F648 /* FileRef RemindersView.swift */; };
+        394BD054DB89711B5C8B7435 /* PBXBuildFile RootView.swift */ = { isa = PBXBuildFile; fileRef = F6A0565656563F150009283A /* FileRef RootView.swift */; };
+        51BFD423C6007E0DB0D50C88 /* PBXBuildFile StatisticsView.swift */ = { isa = PBXBuildFile; fileRef = 1B0A8C214569B6C35BFB546C /* FileRef StatisticsView.swift */; };
+        78B6CA7893B0039C0C8EF3A5 /* PBXBuildFile assets */ = { isa = PBXBuildFile; fileRef = 795A02A63DC9C1E86758E98F /* Assets.xcassets */; };
+        CAF85B0888D78F1F83771A07 /* Sources */ = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+            248BEF368498957ED830A1C2 /* PBXBuildFile AddDrinkView.swift */,
+            450AE5CA851C35C21876FBB9 /* PBXBuildFile CommonViews.swift */,
+            E5DEEEDB8B38C2A315138F2D /* PBXBuildFile HistoryView.swift */,
+            2935E9495F2C08179E795E02 /* PBXBuildFile HomeView.swift */,
+            ED3B0EA77F5D2F407AF6FF58 /* PBXBuildFile HydraLionApp.swift */,
+            EEF22BD1F628DF6B7DB3F0F4 /* PBXBuildFile HydrationStore.swift */,
+            2B41DD9E10E28B20846A1E3D /* PBXBuildFile RemindersView.swift */,
+            394BD054DB89711B5C8B7435 /* PBXBuildFile RootView.swift */,
+            51BFD423C6007E0DB0D50C88 /* PBXBuildFile StatisticsView.swift */,
+        ); runOnlyForDeploymentPostprocessing = 0; };
+        E89B30AA1DC30A6AD8C34610 /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( 78B6CA7893B0039C0C8EF3A5 /* PBXBuildFile assets */, ); runOnlyForDeploymentPostprocessing = 0; };
+        CAFD6B725820BD8EFB592E21 /* Frameworks */ = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+        F3D2C3FE9F2FE20A5880DA71 /* HydraLion group */ = { isa = PBXGroup; children = (
+            07896AEDCD72FD8F3C45635E /* FileRef AddDrinkView.swift */,
+            BB6EE92C22CE890C8241A986 /* FileRef CommonViews.swift */,
+            36571F0DDCB21D3C6A326DD9 /* FileRef HistoryView.swift */,
+            2078FB7087EFFA840D6DB246 /* FileRef HomeView.swift */,
+            CD8150212594EEF003166C37 /* FileRef HydraLionApp.swift */,
+            E5159BD3546B826F282AAEE0 /* FileRef HydrationStore.swift */,
+            A467CE5C9BBF911F3CA8F648 /* FileRef RemindersView.swift */,
+            F6A0565656563F150009283A /* FileRef RootView.swift */,
+            1B0A8C214569B6C35BFB546C /* FileRef StatisticsView.swift */,
+            795A02A63DC9C1E86758E98F /* Assets.xcassets */,
+        ); path = HydraLion; sourceTree = "<group>"; };
+        4EDC8BFAFC6BD936B849F38C /* Products */ = { isa = PBXGroup; children = ( 27AE66AC03A7D34202836C1F /* HydraLion.app */, ); name = Products; sourceTree = "<group>"; };
+        0BB0765602CC9BA993BEA866 /* Main Group */ = { isa = PBXGroup; children = ( F3D2C3FE9F2FE20A5880DA71 /* HydraLion group */, 4EDC8BFAFC6BD936B849F38C /* Products */, ); sourceTree = "<group>"; };
+        6947E524C2DAB07AB0AD925F /* App Debug */ = { isa = XCBuildConfiguration; buildSettings = {
+                SWIFT_VERSION = 5.0;
+                IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+                TARGETED_DEVICE_FAMILY = 1;
+                PRODUCT_BUNDLE_IDENTIFIER = "com.abbassabah.hydralion";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = "HydraLion";
+                INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+                INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+                INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                CODE_SIGN_STYLE = Automatic;
+                DEVELOPMENT_TEAM = "";
+                SUPPORTS_MACCATALYST = NO;
+                SWIFT_EMIT_LOC_STRINGS = YES;
+                ENABLE_USER_SCRIPT_SANDBOXING = YES;
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                DEBUG_INFORMATION_FORMAT = dwarf;
+            }; name = Debug; };
+        E20609128BE34B268B1C1700 /* Project Debug */ = { isa = XCBuildConfiguration; buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                CLANG_ENABLE_MODULES = YES;
+                CLANG_ENABLE_OBJC_ARC = YES;
+                CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+                CLANG_WARN_BOOL_CONVERSION = YES;
+                CLANG_WARN_COMMA = YES;
+                CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+                CLANG_WARN_EMPTY_BODY = YES;
+                CLANG_WARN_ENUM_CONVERSION = YES;
+                CLANG_WARN_INFINITE_RECURSION = YES;
+                CLANG_WARN_INT_CONVERSION = YES;
+                CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+                CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+                CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+                CLANG_WARN_STRICT_PROTOTYPES = YES;
+                CLANG_WARN_SUSPICIOUS_MOVE = YES;
+                CLANG_WARN_UNREACHABLE_CODE = YES;
+                COPY_PHASE_STRIP = NO;
+                GCC_C_LANGUAGE_STANDARD = gnu11;
+                GCC_NO_COMMON_BLOCKS = YES;
+                GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+                GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+                GCC_WARN_UNDECLARED_SELECTOR = YES;
+                GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+                GCC_WARN_UNUSED_FUNCTION = YES;
+                GCC_WARN_UNUSED_VARIABLE = YES;
+                SDKROOT = iphoneos;
+                IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+                SWIFT_VERSION = 5.0;
+                ENABLE_TESTABILITY = YES;
+                DEBUG_INFORMATION_FORMAT = dwarf;
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+            }; name = Debug; };
+        470431989E5839FC32F35A62 /* App Release */ = { isa = XCBuildConfiguration; buildSettings = {
+                SWIFT_VERSION = 5.0;
+                IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+                TARGETED_DEVICE_FAMILY = 1;
+                PRODUCT_BUNDLE_IDENTIFIER = "com.abbassabah.hydralion";
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                GENERATE_INFOPLIST_FILE = YES;
+                INFOPLIST_KEY_CFBundleDisplayName = "HydraLion";
+                INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+                INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+                INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+                CODE_SIGN_STYLE = Automatic;
+                DEVELOPMENT_TEAM = "";
+                SUPPORTS_MACCATALYST = NO;
+                SWIFT_EMIT_LOC_STRINGS = YES;
+                ENABLE_USER_SCRIPT_SANDBOXING = YES;
+                SWIFT_OPTIMIZATION_LEVEL = "-O";
+                DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+            }; name = Release; };
+        06D9FAC4492C016BD6137653 /* Project Release */ = { isa = XCBuildConfiguration; buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                CLANG_ENABLE_MODULES = YES;
+                CLANG_ENABLE_OBJC_ARC = YES;
+                CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+                CLANG_WARN_BOOL_CONVERSION = YES;
+                CLANG_WARN_COMMA = YES;
+                CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+                CLANG_WARN_EMPTY_BODY = YES;
+                CLANG_WARN_ENUM_CONVERSION = YES;
+                CLANG_WARN_INFINITE_RECURSION = YES;
+                CLANG_WARN_INT_CONVERSION = YES;
+                CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+                CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+                CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+                CLANG_WARN_STRICT_PROTOTYPES = YES;
+                CLANG_WARN_SUSPICIOUS_MOVE = YES;
+                CLANG_WARN_UNREACHABLE_CODE = YES;
+                COPY_PHASE_STRIP = NO;
+                GCC_C_LANGUAGE_STANDARD = gnu11;
+                GCC_NO_COMMON_BLOCKS = YES;
+                GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+                GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+                GCC_WARN_UNDECLARED_SELECTOR = YES;
+                GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+                GCC_WARN_UNUSED_FUNCTION = YES;
+                GCC_WARN_UNUSED_VARIABLE = YES;
+                SDKROOT = iphoneos;
+                IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+                SWIFT_VERSION = 5.0;
+                ENABLE_NS_ASSERTIONS = NO;
+                DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+                SWIFT_COMPILATION_MODE = wholemodule;
+            }; name = Release; };
+        B6B57659F34589B1AF5609EC /* App Configuration List */ = { isa = XCConfigurationList; buildConfigurations = ( 6947E524C2DAB07AB0AD925F /* App Debug */, 470431989E5839FC32F35A62 /* App Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+        A368BE0D94595B66655CAADA /* Project Configuration List */ = { isa = XCConfigurationList; buildConfigurations = ( E20609128BE34B268B1C1700 /* Project Debug */, 06D9FAC4492C016BD6137653 /* Project Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+        7C520E5769F7D426CD5D3DD8 /* HydraLion target */ = { isa = PBXNativeTarget; buildConfigurationList = B6B57659F34589B1AF5609EC /* App Configuration List */; buildPhases = (CAF85B0888D78F1F83771A07 /* Sources */, CAFD6B725820BD8EFB592E21 /* Frameworks */, E89B30AA1DC30A6AD8C34610 /* Resources */,); buildRules = (); dependencies = (); name = HydraLion; productName = HydraLion; productReference = 27AE66AC03A7D34202836C1F /* HydraLion.app */; productType = "com.apple.product-type.application"; };
+    };
+    rootObject = EC553E7FBC3AD0AD7AB94BDF /* PBXProject */;
+}
