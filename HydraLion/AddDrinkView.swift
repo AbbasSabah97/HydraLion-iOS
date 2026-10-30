@@ -69,9 +69,10 @@ struct AddDrinkView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: 340)
             PrimaryButton(title: didAdd ? "Drink Added!" : "Add Drink") {
+                guard !didAdd else { return }
                 store.add(kind, milliliters: amount)
-                didAdd = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { onBack() }
+                withAnimation(.easeInOut(duration: 0.22)) { didAdd = true }
+                // Keep the celebration visible until the user explicitly taps Back.
             }
             .disabled(didAdd)
             .padding(.horizontal, 24)
