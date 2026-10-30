@@ -34,7 +34,7 @@ jobs:
           # preserving isolated white details of shirt and sneakers.
           eligible = (rgb.min(axis=2) >= 241) & ((rgb.max(axis=2)-rgb.min(axis=2)) <= 18)
           from PIL import ImageDraw
-          marker = Image.fromarray((eligible.astype(np.uint8)*255), 'L')
+          marker = Image.fromarray((eligible.astype(np.uint8)*255), 'L').copy()
           # Fill near-white pixels connected to the border, without touching clothing.
           w,h = marker.size
           for point in ((0,0),(w-1,0),(0,h-1),(w-1,h-1)):
