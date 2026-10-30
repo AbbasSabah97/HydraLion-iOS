@@ -79,6 +79,14 @@ enum DrinkKind: String, Codable, CaseIterable, Identifiable {
 
 }
 
+// A colored segment, measured as fractions of the user's daily target.
+struct BottleLiquidLayer: Identifiable {
+    let id: UUID
+    let kind: DrinkKind
+    let startFraction: CGFloat
+    let endFraction: CGFloat
+}
+
 struct DrinkEntry: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var kind: DrinkKind
@@ -136,8 +144,40 @@ final class HydrationStore: ObservableObject {
     var consumedToday: Int { total(on: .now) }
     var remainingToday: Int { max(0, dailyGoal - consumedToday) }
     var progressToday: Double { min(1, Double(consumedToday) / Double(max(dailyGoal, 1))) }
-    var latestDrinkToday: DrinkKind? { entries.first(where: { Calendar.current.isDateInToday($0.date) })?.kind }
-    var bottleLiquidColors: [Color] { (latestDrinkToday ?? .water).liquidGradient }
+    // Chronological colored layers: earlier drinks are at the bottom.
+    // If the day's total exceeds the goal, trim the oldest visible volume
+    // so the newest drink still visibly increases the upper portion.
+    var bottleLayers: [BottleLiquidLayer] {
+        let ordered = entries.filter {
+            Calendar.current.isDateInToday($0.date)
+        }.reversed()
+
+        let goal = max(dailyGoal, 1)
+        let total = ordered.reduce(0) { $0 + $1.milliliters }
+        var overflow = max(0, total - goal)
+        var heightSoFar = 0
+        var result: [BottleLiquidLayer] = []
+
+        for entry in ordered {
+            let trimmed = min(overflow, entry.milliliters)
+            overflow -= trimmed
+            let visibleAmount = entry.milliliters - trimmed
+            guard visibleAmount > 0 else { continue }
+
+            let start = CGFloat(heightSoFar) / CGFloat(goal)
+            heightSoFar += visibleAmount
+            let end = min(1, CGFloat(heightSoFar) / CGFloat(goal))
+            result.append(
+                BottleLiquidLayer(
+                    id: entry.id,
+                    kind: entry.kind,
+                    startFraction: start,
+                    endFraction: end
+                )
+            )
+        }
+        return result
+    }
 
     func add(_ kind: DrinkKind, milliliters: Int) {
         entries.insert(DrinkEntry(kind: kind, milliliters: max(10, milliliters)), at: 0)

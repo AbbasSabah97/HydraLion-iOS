@@ -47,11 +47,32 @@ struct WaterWave: Shape {
     }
 }
 
+private struct SurfaceLine: Shape {
+    var phase: CGFloat
+    var animatableData: CGFloat {
+        get { phase }
+        set { phase = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let mid = rect.height / 2
+        for x in stride(from: CGFloat(0), through: rect.width, by: 4) {
+            let y = mid + sin(x / max(rect.width, 1) * .pi * 2 + phase) * 6
+            if x == 0 {
+                path.move(to: CGPoint(x: x, y: y))
+            } else {
+                path.addLine(to: CGPoint(x: x, y: y))
+            }
+        }
+        return path
+    }
+}
+
 private struct GlassBottleBody: View {
-    let progress: CGFloat
+    let layers: [BottleLiquidLayer]
     let phase: CGFloat
     let time: TimeInterval
-    let liquidColors: [Color]
 
     private let bubbleX: [CGFloat] = [0.20, 0.37, 0.53, 0.69, 0.83, 0.28, 0.47, 0.76, 0.16, 0.60, 0.88, 0.33]
 
@@ -59,59 +80,71 @@ private struct GlassBottleBody: View {
         GeometryReader { geometry in
             let w = geometry.size.width
             let h = geometry.size.height
-            let waterHeight = h * min(1, max(0, progress))
+            let filledFraction = layers.last?.endFraction ?? 0
+            let liquidHeight = h * filledFraction
 
             ZStack(alignment: .bottom) {
                 BottleShape()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.90, green: 0.95, blue: 1.0).opacity(0.54),
+                                Color(red: 0.90, green: 0.95, blue: 1).opacity(0.54),
                                 Color.white.opacity(0.16),
-                                Color(red: 0.79, green: 0.88, blue: 1.0).opacity(0.52)
+                                Color(red: 0.79, green: 0.88, blue: 1).opacity(0.52)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                if waterHeight > 2 {
-                    ZStack(alignment: .bottom) {
-                        WaterWave(phase: phase, amplitude: 10)
-                            .fill(
-                                LinearGradient(
-                                    colors: liquidColors,
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
+                // Each drink occupies only its own vertical portion.
+                // Previous liquids keep their colors as new drinks stack above them.
+                ForEach(layers) { layer in
+                    let bandHeight = h * (layer.endFraction - layer.startFraction)
+                    let baseOffset = h * layer.startFraction
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: layer.kind.liquidGradient,
+                                startPoint: .top,
+                                endPoint: .bottom
                             )
+                        )
+                        .frame(height: max(0, bandHeight))
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .offset(y: -baseOffset)
+                }
 
-                        WaterWave(phase: phase + 1.4, amplitude: 5)
-                            .fill(Color.white.opacity(0.13))
+                if liquidHeight > 2 {
+                    SurfaceLine(phase: phase)
+                        .stroke(.white.opacity(0.64), lineWidth: 2.0)
+                        .frame(height: 24)
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .offset(y: -(liquidHeight - 12))
 
-                        // Rising bubbles wrap from bottom to surface and are masked to the water.
+                    // Bubbles rise through all drink layers and wrap to the bottom.
+                    ZStack {
                         ForEach(0..<bubbleX.count, id: \.self) { index in
                             let diameter = CGFloat(7 + (index % 5) * 3)
                             let speed = 0.14 + Double(index % 4) * 0.045
-                            let rise = CGFloat((time * speed + Double(index) * 0.17).truncatingRemainder(dividingBy: 1))
+                            let rise = CGFloat(
+                                (time * speed + Double(index) * 0.17)
+                                    .truncatingRemainder(dividingBy: 1)
+                            )
                             Circle()
-                                .fill(Color.white.opacity(0.14))
+                                .fill(.white.opacity(0.14))
                                 .overlay {
                                     Circle()
-                                        .stroke(Color.white.opacity(0.78), lineWidth: 1.4)
+                                        .stroke(.white.opacity(0.78), lineWidth: 1.4)
                                 }
                                 .frame(width: diameter, height: diameter)
                                 .position(
                                     x: w * bubbleX[index] + sin(phase + CGFloat(index)) * 6,
-                                    y: (waterHeight + 24) * (1 - rise)
+                                    y: liquidHeight * (1 - rise)
                                 )
                         }
                     }
-                    .frame(width: w, height: waterHeight + 24)
-                    .mask {
-                        WaterWave(phase: phase, amplitude: 10)
-                            .fill(.white)
-                    }
+                    .frame(width: w, height: liquidHeight)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                 }
 
@@ -193,36 +226,14 @@ struct HomeView: View {
 
                     ZStack {
                         GlassBottleBody(
-                            progress: CGFloat(store.progressToday),
+                            layers: store.bottleLayers,
                             phase: phase,
-                            time: time,
-                            liquidColors: store.bottleLiquidColors
+                            time: time
                         )
 
                         CompletedMascot(size: mascotSize)
                             .position(x: w / 2, y: h * 0.52)
                             .accessibilityHidden(true)
-
-                        // A translucent foreground water layer gives the seated figure
-                        // a natural immersed/floating appearance and softens the shoe edge.
-                        if store.progressToday > 0.10 {
-                            WaterWave(phase: phase + 0.7, amplitude: 5)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            store.bottleLiquidColors[0].opacity(0.05),
-                                            store.bottleLiquidColors[1].opacity(0.14),
-                                            store.bottleLiquidColors[2].opacity(0.28)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .frame(height: h * 0.30)
-                                .frame(maxHeight: .infinity, alignment: .bottom)
-                                .clipShape(BottleShape())
-                                .allowsHitTesting(false)
-                        }
 
                         VStack(spacing: 6) {
                             HStack(alignment: .firstTextBaseline, spacing: 8) {
