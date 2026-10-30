@@ -45,14 +45,19 @@ jobs:
           mask = mask.filter(ImageFilter.GaussianBlur(0.7))
           arr[:,:,3] = np.minimum(arr[:,:,3], np.asarray(mask))
           completed = Image.fromarray(arr, 'RGBA')
-          box = completed.getbbox()
-          if box:
+          # Crop using significant foreground alpha, then add a transparent margin.
+          alpha = np.asarray(completed.getchannel('A'))
+          ys, xs = np.where(alpha > 32)
+          if len(xs):
+              pad = 26
+              box = (max(0,int(xs.min())-pad), max(0,int(ys.min())-pad),
+                     min(completed.width,int(xs.max())+pad+1),
+                     min(completed.height,int(ys.max())+pad+1))
               completed = completed.crop(box)
-          # High-resolution iconography with modest file size.
           completed.thumbnail((1400,1400), Image.Resampling.LANCZOS)
           target='HydraLion/Assets.xcassets/MascotIdle.imageset/MascotIdle.png'
           completed.save(target, 'PNG', optimize=True, compress_level=9)
-          assert completed.getpixel((0,0))[3] == 0, 'Unexpected opaque background'
+          assert completed.getchannel('A').getextrema()[0] == 0, 'No transparent pixels detected'
           print('Wrote transparent mascot:',completed.size,os.path.getsize(target))
           PY
       - name: Commit updated original image to repository
