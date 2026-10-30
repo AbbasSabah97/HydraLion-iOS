@@ -50,13 +50,13 @@ struct WaterWave: Shape {
 // A single animated volume. Color zones blend together inside one continuous liquid
 // shape; there are no independent rectangular bands or horizontal separators.
 private struct FluidVolume: View {
-    let layers: [BottleLiquidLayer]
+    let progress: CGFloat
     let phase: CGFloat
     let time: TimeInterval
 
     private let bubblePositions: [CGFloat] = [0.12, 0.22, 0.33, 0.45, 0.57, 0.67, 0.78, 0.86, 0.29, 0.51, 0.73, 0.39, 0.18, 0.61, 0.83, 0.49]
 
-    private var level: CGFloat { min(1, max(0, layers.last?.endFraction ?? 0)) }
+    private var level: CGFloat { min(1, max(0, progress)) }
 
     var body: some View {
         Canvas(opaque: false, rendersAsynchronously: true) { context, size in
@@ -92,30 +92,30 @@ private struct FluidVolume: View {
     }
 
     private func drawColorClouds(context: GraphicsContext, size: CGSize) {
+        // Natural subsurface light scattering, with only clear blue water.
         let w = size.width
         let h = size.height
-        for (index, layer) in layers.enumerated() {
-            let centerFraction = (layer.startFraction + layer.endFraction) / 2
-            let centerY = h * (1 - centerFraction)
-            let tint = layer.kind.fluidTint
-            let scale = min(1, max(0.06, layer.endFraction - layer.startFraction))
-            let cloudWidth = w * (0.46 + scale * 0.55)
-            let radius = max(w * 0.19, scale * h * 0.77)
-            let drift = sin(phase * 0.58 + CGFloat(index) * 1.9)
-            let x = w * (index.isMultiple(of: 2) ? 0.34 : 0.68) + drift * w * 0.09
-            let center = CGPoint(x: x, y: centerY + cos(phase + CGFloat(index)) * 12)
-            let rect = CGRect(x: center.x - cloudWidth / 2,
-                              y: center.y - radius, width: cloudWidth, height: radius * 2)
+        let filledHeight = h * level
+        for index in 0..<5 {
+            let t = CGFloat(index) / 5
+            let cloudWidth = w * (0.56 + t * 0.26)
+            let cloudHeight = max(40, filledHeight * 0.38)
+            let cx = w * (index.isMultiple(of: 2) ? 0.39 : 0.64)
+                   + sin(phase * 0.34 + CGFloat(index)) * w * 0.06
+            let cy = h - filledHeight * (0.18 + t * 0.73)
+                   + cos(phase * 0.46 + CGFloat(index)) * 9
+            let center = CGPoint(x: cx, y: cy)
+            let region = CGRect(x: cx - cloudWidth / 2, y: cy - cloudHeight / 2,
+                                width: cloudWidth, height: cloudHeight)
             var blurred = context
-            blurred.addFilter(.blur(radius: max(11, w * 0.055)))
-            let colors = Gradient(colors: [tint.opacity(0.36), tint.opacity(0.10), tint.opacity(0)])
+            blurred.addFilter(.blur(radius: max(13, w * 0.062)))
+            let cloudTint = index.isMultiple(of: 2)
+                ? Color.white.opacity(0.26)
+                : Color(red: 0.52, green: 0.83, blue: 1.0).opacity(0.23)
             let shader = GraphicsContext.Shading.radialGradient(
-                colors,
-                center: center,
-                startRadius: 0,
-                endRadius: max(cloudWidth, radius)
-            )
-            blurred.fill(Path(ellipseIn: rect), with: shader)
+                Gradient(colors: [cloudTint, cloudTint.opacity(0.28), .clear]),
+                center: center, startRadius: 0, endRadius: cloudWidth * 0.65)
+            blurred.fill(Path(ellipseIn: region), with: shader)
         }
     }
 
@@ -195,29 +195,19 @@ private struct FluidVolume: View {
     }
 
     private func liquidStops() -> [Gradient.Stop] {
-        guard !layers.isEmpty else {
-            return [.init(color: Color(red: 0.52, green: 0.77, blue: 1), location: 0),
-                    .init(color: Palette.blue, location: 1)]
-        }
-        let occupied = max(0.001, layers.last!.endFraction)
-        var stops: [Gradient.Stop] = []
-        // Top is the most recently added drink; bottom is the earliest.
-        for layer in layers.reversed() {
-            let upper = 1 - (layer.endFraction / occupied)
-            let lower = 1 - (layer.startFraction / occupied)
-            let center = (upper + lower) / 2
-            let color = layer.kind.fluidTint
-            stops.append(.init(color: color, location: min(1, max(0, center))))
-        }
-        // Smooth continuous interpolation; no sharp color cut lines.
-        stops.insert(.init(color: layers.last!.kind.fluidTint.opacity(0.78), location: 0), at: 0)
-        stops.append(.init(color: layers.first!.kind.fluidTint.opacity(0.92), location: 1))
-        return stops
+        // One continuous, translucent, water-blue liquid regardless of drink type.
+        // Brighter near the wave crest, with gentle depth as volume increases.
+        [
+            .init(color: Color(red: 0.84, green: 0.95, blue: 1.0).opacity(0.37), location: 0.00),
+            .init(color: Color(red: 0.56, green: 0.84, blue: 1.0).opacity(0.54), location: 0.28),
+            .init(color: Color(red: 0.35, green: 0.70, blue: 0.99).opacity(0.61), location: 0.69),
+            .init(color: Color(red: 0.26, green: 0.59, blue: 0.96).opacity(0.67), location: 1.00)
+        ]
     }
 }
 
 private struct GlassBottleBody: View {
-    let layers: [BottleLiquidLayer]
+    let progress: CGFloat
     let phase: CGFloat
     let time: TimeInterval
 
@@ -232,7 +222,7 @@ private struct GlassBottleBody: View {
                     ], startPoint: .topLeading, endPoint: .bottomTrailing)
                 )
 
-            FluidVolume(layers: layers, phase: phase, time: time)
+            FluidVolume(progress: progress, phase: phase, time: time)
                 .clipShape(BottleShape())
 
             // Two large soft specular sweeps, stronger inner and outer glass rims.
@@ -272,63 +262,6 @@ private struct GlassBottleBody: View {
     }
 }
 
-// The supplied mascot image ends across both shoe toes.
-// These shoe-tip continuations soften that hard image edge without redrawing his face/body.
-private struct CompletedMascot: View {
-    let size: CGFloat
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<2, id: \.self) { index in
-                Ellipse()
-                    .fill(
-                        LinearGradient(
-                            colors: [.white, Color(red: 0.79, green: 0.82, blue: 0.90)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay {
-                        Ellipse().stroke(Color(red: 0.73, green: 0.77, blue: 0.86), lineWidth: 1)
-                    }
-                    .frame(width: size * 0.235, height: size * 0.094)
-                    .position(x: size * (index == 0 ? 0.38 : 0.62), y: size * 0.958)
-            }
-
-            MascotView(pose: "MascotIdle")
-                .frame(width: size, height: size)
-        }
-        .frame(width: size, height: size)
-    }
-}
-
-
-// A translucent near-field water wrap around the shoes and lower legs.
-// It fades naturally into the continuous volume behind the figure.
-private struct MascotWaterWrap: View {
-    let phase: CGFloat
-
-    var body: some View {
-        Canvas { context, size in
-            let w = size.width
-            let h = size.height
-            for index in 0..<5 {
-                var swirl = Path()
-                let yy = h * (0.76 + CGFloat(index) * 0.025)
-                for x in stride(from: CGFloat(0), through: w + 4, by: 5) {
-                    let y = yy + sin((x / w) * .pi * 2.1 + phase * 0.70 + CGFloat(index)) * 11
-                    if x == 0 { swirl.move(to: CGPoint(x: x, y: y)) }
-                    else { swirl.addLine(to: CGPoint(x: x, y: y)) }
-                }
-                context.stroke(swirl, with: .color(.white.opacity(0.28 - Double(index) * 0.033)),
-                               style: StrokeStyle(lineWidth: index == 0 ? 3.4 : 2.2, lineCap: .round))
-            }
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-}
-
 struct HomeView: View {
     @EnvironmentObject private var store: HydrationStore
     let onAdd: () -> Void
@@ -341,7 +274,7 @@ struct HomeView: View {
             GeometryReader { geometry in
                 let w = geometry.size.width
                 let h = geometry.size.height
-                let mascotSize = min(w * 0.79, h * 0.46)
+                let mascotSize = min(w * 0.83, h * 0.48)
 
                 TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { timeline in
                     let time = timeline.date.timeIntervalSinceReferenceDate
@@ -349,20 +282,15 @@ struct HomeView: View {
 
                     ZStack {
                         GlassBottleBody(
-                            layers: store.bottleLayers,
+                            progress: CGFloat(store.progressToday),
                             phase: phase,
                             time: time
                         )
 
-                        CompletedMascot(size: mascotSize)
+                        MascotView(pose: "MascotIdle")
+                            .frame(width: mascotSize, height: mascotSize)
                             .position(x: w / 2, y: h * 0.52)
                             .accessibilityHidden(true)
-
-                        if store.progressToday > 0.26 {
-                            MascotWaterWrap(phase: phase)
-                                .clipShape(BottleShape())
-                                .allowsHitTesting(false)
-                        }
 
                         VStack(spacing: 6) {
                             HStack(alignment: .firstTextBaseline, spacing: 8) {
