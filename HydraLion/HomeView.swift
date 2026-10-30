@@ -59,94 +59,123 @@ private struct FluidVolume: View {
     private var level: CGFloat { min(1, max(0, layers.last?.endFraction ?? 0)) }
 
     var body: some View {
-        Canvas(opaque: false, rendersAsynchronously: true) { canvas, size in
-            let w = size.width
-            let h = size.height
-            let fillHeight = level * h
-            guard fillHeight > 2 else { return }
-
-            let surfaceY = h - fillHeight
-            let fill = fluidPath(width: w, height: h, surfaceY: surfaceY, phase: phase)
-
-            // Every color belongs to its recorded drink volume, but all layers
-            // blend at their boundaries as one optically continuous substance.
-            canvas.clip(to: fill)
-            canvas.fill(
-                Path(CGRect(origin: .zero, size: size)),
-                with: .linearGradient(
-                    Gradient(stops: liquidStops()),
-                    startPoint: CGPoint(x: w / 2, y: surfaceY),
-                    endPoint: CGPoint(x: w / 2, y: h)
-                )
-            )
-
-            // Semi-transparent drifting color clouds create the marble/swirl
-            // appearance from the reference without painting rigid stripes.
-            for (index, layer) in layers.enumerated() {
-                let centerFraction = (layer.startFraction + layer.endFraction) / 2
-                let centerY = h * (1 - centerFraction)
-                let tint = layer.kind.fluidTint
-                let scale = min(1, max(0.06, layer.endFraction - layer.startFraction))
-                let width = w * (0.46 + scale * 0.55)
-                let radius = max(w * 0.19, (scale * h) * 0.77)
-                let drift = sin(phase * 0.58 + CGFloat(index) * 1.9)
-                let x = w * (index.isMultiple(of: 2) ? 0.34 : 0.68) + drift * w * 0.09
-                let center = CGPoint(x: x, y: centerY + cos(phase + CGFloat(index)) * 12)
-                var mist = canvas
-                mist.addFilter(.blur(radius: max(11, w * 0.055)))
-                let blob = Path(ellipseIn: CGRect(x: center.x - width / 2, y: center.y - radius,
-                                                 width: width, height: radius * 2))
-                mist.fill(blob, with: .radialGradient(
-                    Gradient(colors: [tint.opacity(0.36), tint.opacity(0.10), tint.opacity(0)]),
-                    center: center, startRadius: 0, endRadius: max(width, radius)
-                ))
-            }
-
-            // Curved flowing glints / caustics run through all colors continuously.
-            for index in 0..<16 {
-                let normalized = CGFloat(index + 1) / 17
-                let baseY = surfaceY + fillHeight * normalized
-                var wave = Path()
-                for x in stride(from: CGFloat(0), through: w + 5, by: 7) {
-                    let y = baseY
-                        + sin(x / w * .pi * 2.2 + phase * 0.56 + CGFloat(index) * 0.71) * (8 + normalized * 12)
-                        + sin(x / w * .pi * 4.2 - phase * 0.3 + CGFloat(index)) * 4
-                    if x == 0 { wave.move(to: CGPoint(x: x, y: y)) }
-                    else { wave.addLine(to: CGPoint(x: x, y: y)) }
-                }
-                canvas.stroke(wave, with: .color(.white.opacity(index.isMultiple(of: 3) ? 0.28 : 0.11)),
-                              style: StrokeStyle(lineWidth: index.isMultiple(of: 3) ? 2.6 : 1.2,
-                                                 lineCap: .round))
-            }
-
-            // Bright crest at the surface, visible above the fluid gradient.
-            var crest = Path()
-            for x in stride(from: CGFloat(0), through: w + 5, by: 5) {
-                let y = surfaceY + 10
-                    + sin((x / w) * .pi * 2 + phase * 0.67) * 9
-                    + sin((x / w) * .pi * 4 - phase * 0.30) * 3
-                if x == 0 { crest.move(to: CGPoint(x: x, y: y)) }
-                else { crest.addLine(to: CGPoint(x: x, y: y)) }
-            }
-            canvas.stroke(crest, with: .color(.white.opacity(0.80)),
-                          style: StrokeStyle(lineWidth: 3.1, lineCap: .round))
-
-            // Bubbles ascend and restart at the bottom; confined to the fluid volume.
-            for index in bubblePositions.indices {
-                let radius = CGFloat(3 + (index % 5) * 2)
-                let velocity = 0.09 + Double(index % 5) * 0.024
-                let distance = (time * velocity + Double(index) * 0.237).truncatingRemainder(dividingBy: 1)
-                let x = w * bubblePositions[index] + sin(phase + CGFloat(index) * 2) * 7
-                let y = h - CGFloat(distance) * fillHeight
-                let bubble = Path(ellipseIn: CGRect(x: x-radius, y: y-radius, width: radius*2, height: radius*2))
-                canvas.fill(bubble, with: .color(.white.opacity(0.11)))
-                canvas.stroke(bubble, with: .color(.white.opacity(0.68)), lineWidth: 1.2)
-                let glint = Path(ellipseIn: CGRect(x:x-radius*0.42, y:y-radius*0.56,
-                                                  width:max(1,radius*0.34), height:max(1,radius*0.24)))
-                canvas.fill(glint, with: .color(.white.opacity(0.86)))
-            }
+        Canvas(opaque: false, rendersAsynchronously: true) { context, size in
+            drawFluid(context: context, size: size)
         }
         .accessibilityHidden(true)
+    }
+
+    private func drawFluid(context: GraphicsContext, size: CGSize) {
+        let w = size.width
+        let h = size.height
+        let fillHeight = level * h
+        guard fillHeight > 2 else { return }
+
+        let surfaceY = h - fillHeight
+        let fillShape = fluidPath(width: w, height: h, surfaceY: surfaceY, phase: phase)
+
+        var liquidContext = context
+        liquidContext.clip(to: fillShape)
+
+        let baseGradient = Gradient(stops: liquidStops())
+        let baseShading = GraphicsContext.Shading.linearGradient(
+            baseGradient,
+            startPoint: CGPoint(x: w / 2, y: surfaceY),
+            endPoint: CGPoint(x: w / 2, y: h)
+        )
+        liquidContext.fill(Path(CGRect(origin: .zero, size: size)), with: baseShading)
+
+        drawColorClouds(context: liquidContext, size: size)
+        drawCaustics(context: liquidContext, size: size, surfaceY: surfaceY, fillHeight: fillHeight)
+        drawSurface(context: liquidContext, width: w, surfaceY: surfaceY)
+        drawBubbles(context: liquidContext, size: size, fillHeight: fillHeight)
+    }
+
+    private func drawColorClouds(context: GraphicsContext, size: CGSize) {
+        let w = size.width
+        let h = size.height
+        for (index, layer) in layers.enumerated() {
+            let centerFraction = (layer.startFraction + layer.endFraction) / 2
+            let centerY = h * (1 - centerFraction)
+            let tint = layer.kind.fluidTint
+            let scale = min(1, max(0.06, layer.endFraction - layer.startFraction))
+            let cloudWidth = w * (0.46 + scale * 0.55)
+            let radius = max(w * 0.19, scale * h * 0.77)
+            let drift = sin(phase * 0.58 + CGFloat(index) * 1.9)
+            let x = w * (index.isMultiple(of: 2) ? 0.34 : 0.68) + drift * w * 0.09
+            let center = CGPoint(x: x, y: centerY + cos(phase + CGFloat(index)) * 12)
+            let rect = CGRect(x: center.x - cloudWidth / 2,
+                              y: center.y - radius, width: cloudWidth, height: radius * 2)
+            var blurred = context
+            blurred.addFilter(.blur(radius: max(11, w * 0.055)))
+            let colors = Gradient(colors: [tint.opacity(0.36), tint.opacity(0.10), tint.opacity(0)])
+            let shader = GraphicsContext.Shading.radialGradient(
+                colors,
+                center: center,
+                startRadius: 0,
+                endRadius: max(cloudWidth, radius)
+            )
+            blurred.fill(Path(ellipseIn: rect), with: shader)
+        }
+    }
+
+    private func drawCaustics(context: GraphicsContext, size: CGSize,
+                              surfaceY: CGFloat, fillHeight: CGFloat) {
+        let w = size.width
+        for index in 0..<16 {
+            let normalized = CGFloat(index + 1) / 17
+            let baseY = surfaceY + fillHeight * normalized
+            var wave = Path()
+            for x in stride(from: CGFloat(0), through: w + 5, by: 7) {
+                let one = sin(x / w * .pi * 2.2 + phase * 0.56 + CGFloat(index) * 0.71)
+                let two = sin(x / w * .pi * 4.2 - phase * 0.3 + CGFloat(index))
+                let y = baseY + one * (8 + normalized * 12) + two * 4
+                if x == 0 { wave.move(to: CGPoint(x: x, y: y)) }
+                else { wave.addLine(to: CGPoint(x: x, y: y)) }
+            }
+            let highlight = index.isMultiple(of: 3)
+            context.stroke(
+                wave,
+                with: .color(.white.opacity(highlight ? 0.28 : 0.11)),
+                style: StrokeStyle(lineWidth: highlight ? 2.6 : 1.2, lineCap: .round)
+            )
+        }
+    }
+
+    private func drawSurface(context: GraphicsContext, width: CGFloat, surfaceY: CGFloat) {
+        var crest = Path()
+        for x in stride(from: CGFloat(0), through: width + 5, by: 5) {
+            let large = sin(x / width * .pi * 2 + phase * 0.67) * 9
+            let small = sin(x / width * .pi * 4 - phase * 0.30) * 3
+            let y = surfaceY + 10 + large + small
+            if x == 0 { crest.move(to: CGPoint(x: x, y: y)) }
+            else { crest.addLine(to: CGPoint(x: x, y: y)) }
+        }
+        context.stroke(
+            crest,
+            with: .color(.white.opacity(0.80)),
+            style: StrokeStyle(lineWidth: 3.1, lineCap: .round)
+        )
+    }
+
+    private func drawBubbles(context: GraphicsContext, size: CGSize, fillHeight: CGFloat) {
+        let w = size.width
+        let h = size.height
+        for index in bubblePositions.indices {
+            let radius = CGFloat(3 + (index % 5) * 2)
+            let velocity = 0.09 + Double(index % 5) * 0.024
+            let distance = (time * velocity + Double(index) * 0.237).truncatingRemainder(dividingBy: 1)
+            let x = w * bubblePositions[index] + sin(phase + CGFloat(index) * 2) * 7
+            let y = h - CGFloat(distance) * fillHeight
+            let rect = CGRect(x: x - radius, y: y - radius,
+                              width: radius * 2, height: radius * 2)
+            let bubble = Path(ellipseIn: rect)
+            context.fill(bubble, with: .color(.white.opacity(0.11)))
+            context.stroke(bubble, with: .color(.white.opacity(0.68)), lineWidth: 1.2)
+            let tiny = CGRect(x: x - radius * 0.42, y: y - radius * 0.56,
+                              width: max(1, radius * 0.34), height: max(1, radius * 0.24))
+            context.fill(Path(ellipseIn: tiny), with: .color(.white.opacity(0.86)))
+        }
     }
 
     private func fluidPath(width: CGFloat, height: CGFloat, surfaceY: CGFloat, phase: CGFloat) -> Path {
