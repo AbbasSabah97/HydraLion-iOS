@@ -42,4 +42,6 @@ jobs:
           git add HydraLion/Assets.xcassets/MascotIdle.imageset/MascotIdle.png
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Protect full mascot shoes with transparent canvas padding"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
