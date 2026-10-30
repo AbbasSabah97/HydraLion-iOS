@@ -58,8 +58,8 @@
                 IPHONEOS_DEPLOYMENT_TARGET = 16.0;
                 TARGETED_DEVICE_FAMILY = 1;
                 PRODUCT_BUNDLE_IDENTIFIER = "com.abbassabah.hydralion";
-                MARKETING_VERSION = 1.7.0;
-                CURRENT_PROJECT_VERSION = 9;
+                MARKETING_VERSION = 1.8.0;
+                CURRENT_PROJECT_VERSION = 10;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = "HydraLion";
@@ -114,8 +114,8 @@
                 IPHONEOS_DEPLOYMENT_TARGET = 16.0;
                 TARGETED_DEVICE_FAMILY = 1;
                 PRODUCT_BUNDLE_IDENTIFIER = "com.abbassabah.hydralion";
-                MARKETING_VERSION = 1.7.0;
-                CURRENT_PROJECT_VERSION = 9;
+                MARKETING_VERSION = 1.8.0;
+                CURRENT_PROJECT_VERSION = 10;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 GENERATE_INFOPLIST_FILE = YES;
                 INFOPLIST_KEY_CFBundleDisplayName = "HydraLion";
