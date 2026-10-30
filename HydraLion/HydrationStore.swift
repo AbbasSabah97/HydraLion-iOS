@@ -40,6 +40,43 @@ enum DrinkKind: String, Codable, CaseIterable, Identifiable {
         }
     }
     var soft: Color { accent.opacity(0.09) }
+
+    // Last drink of today determines the liquid tint shown in the glass bottle.
+    var liquidGradient: [Color] {
+        switch self {
+        case .water:
+            return [
+                Color(red: 0.64, green: 0.80, blue: 1.0).opacity(0.32),
+                Palette.blue.opacity(0.52),
+                Palette.blueBright.opacity(0.67)
+            ]
+        case .juice:
+            return [
+                Color(red: 1.0, green: 0.88, blue: 0.52).opacity(0.34),
+                Color(red: 0.99, green: 0.70, blue: 0.22).opacity(0.55),
+                Color(red: 0.95, green: 0.50, blue: 0.06).opacity(0.72)
+            ]
+        case .tea:
+            return [
+                Color(red: 0.95, green: 0.89, blue: 0.77).opacity(0.31),
+                Color(red: 0.87, green: 0.77, blue: 0.62).opacity(0.48),
+                Color(red: 0.78, green: 0.67, blue: 0.52).opacity(0.62)
+            ]
+        case .milk:
+            return [
+                Color.white.opacity(0.80),
+                Color(red: 0.97, green: 0.98, blue: 1.0).opacity(0.90),
+                Color(red: 0.90, green: 0.93, blue: 0.98).opacity(0.94)
+            ]
+        case .coffee:
+            return [
+                Color(red: 0.56, green: 0.39, blue: 0.26).opacity(0.41),
+                Color(red: 0.42, green: 0.27, blue: 0.15).opacity(0.61),
+                Color(red: 0.26, green: 0.15, blue: 0.08).opacity(0.78)
+            ]
+        }
+    }
+
 }
 
 struct DrinkEntry: Codable, Identifiable, Equatable {
@@ -99,6 +136,8 @@ final class HydrationStore: ObservableObject {
     var consumedToday: Int { total(on: .now) }
     var remainingToday: Int { max(0, dailyGoal - consumedToday) }
     var progressToday: Double { min(1, Double(consumedToday) / Double(max(dailyGoal, 1))) }
+    var latestDrinkToday: DrinkKind? { entries.first(where: { Calendar.current.isDateInToday($0.date) })?.kind }
+    var bottleLiquidColors: [Color] { (latestDrinkToday ?? .water).liquidGradient }
 
     func add(_ kind: DrinkKind, milliliters: Int) {
         entries.insert(DrinkEntry(kind: kind, milliliters: max(10, milliliters)), at: 0)
