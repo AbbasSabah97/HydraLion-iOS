@@ -177,10 +177,10 @@ private struct FluidVolume: View {
         // Physically softer transparent blue: depth increases smoothly toward
         // the bottle floor; the water is never an opaque painted shape.
         [
-            .init(color: Color(red: 0.88, green: 0.97, blue: 1.00).opacity(0.20), location: 0.00),
-            .init(color: Color(red: 0.72, green: 0.91, blue: 1.00).opacity(0.36), location: 0.21),
-            .init(color: Color(red: 0.48, green: 0.79, blue: 1.00).opacity(0.51), location: 0.66),
-            .init(color: Color(red: 0.33, green: 0.67, blue: 0.95).opacity(0.63), location: 1.00)
+            .init(color: Color(red: 0.83, green: 0.95, blue: 1.00).opacity(0.26), location: 0.00),
+            .init(color: Color(red: 0.61, green: 0.85, blue: 1.00).opacity(0.43), location: 0.21),
+            .init(color: Color(red: 0.37, green: 0.71, blue: 0.98).opacity(0.59), location: 0.66),
+            .init(color: Color(red: 0.25, green: 0.59, blue: 0.94).opacity(0.72), location: 1.00)
         ]
     }
 }
