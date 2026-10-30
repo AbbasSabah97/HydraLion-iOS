@@ -47,25 +47,143 @@ struct WaterWave: Shape {
     }
 }
 
-private struct SurfaceLine: Shape {
-    var phase: CGFloat
-    var animatableData: CGFloat {
-        get { phase }
-        set { phase = newValue }
-    }
+// A single animated volume. Color zones blend together inside one continuous liquid
+// shape; there are no independent rectangular bands or horizontal separators.
+private struct FluidVolume: View {
+    let layers: [BottleLiquidLayer]
+    let phase: CGFloat
+    let time: TimeInterval
 
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let mid = rect.height / 2
-        for x in stride(from: CGFloat(0), through: rect.width, by: 4) {
-            let y = mid + sin(x / max(rect.width, 1) * .pi * 2 + phase) * 6
-            if x == 0 {
-                path.move(to: CGPoint(x: x, y: y))
-            } else {
-                path.addLine(to: CGPoint(x: x, y: y))
+    private let bubblePositions: [CGFloat] = [0.12, 0.22, 0.33, 0.45, 0.57, 0.67, 0.78, 0.86, 0.29, 0.51, 0.73, 0.39, 0.18, 0.61, 0.83, 0.49]
+
+    private var level: CGFloat { min(1, max(0, layers.last?.endFraction ?? 0)) }
+
+    var body: some View {
+        Canvas(opaque: false, rendersAsynchronously: true) { canvas, size in
+            let w = size.width
+            let h = size.height
+            let fillHeight = level * h
+            guard fillHeight > 2 else { return }
+
+            let surfaceY = h - fillHeight
+            let fill = fluidPath(width: w, height: h, surfaceY: surfaceY, phase: phase)
+
+            // Every color belongs to its recorded drink volume, but all layers
+            // blend at their boundaries as one optically continuous substance.
+            canvas.clip(to: fill)
+            canvas.fill(
+                Path(CGRect(origin: .zero, size: size)),
+                with: .linearGradient(
+                    Gradient(stops: liquidStops()),
+                    startPoint: CGPoint(x: w / 2, y: surfaceY),
+                    endPoint: CGPoint(x: w / 2, y: h)
+                )
+            )
+
+            // Semi-transparent drifting color clouds create the marble/swirl
+            // appearance from the reference without painting rigid stripes.
+            for (index, layer) in layers.enumerated() {
+                let centerFraction = (layer.startFraction + layer.endFraction) / 2
+                let centerY = h * (1 - centerFraction)
+                let tint = layer.kind.fluidTint
+                let scale = min(1, max(0.06, layer.endFraction - layer.startFraction))
+                let width = w * (0.46 + scale * 0.55)
+                let radius = max(w * 0.19, (scale * h) * 0.77)
+                let drift = sin(phase * 0.58 + CGFloat(index) * 1.9)
+                let x = w * (index.isMultiple(of: 2) ? 0.34 : 0.68) + drift * w * 0.09
+                let center = CGPoint(x: x, y: centerY + cos(phase + CGFloat(index)) * 12)
+                var mist = canvas
+                mist.addFilter(.blur(radius: max(11, w * 0.055)))
+                let blob = Path(ellipseIn: CGRect(x: center.x - width / 2, y: center.y - radius,
+                                                 width: width, height: radius * 2))
+                mist.fill(blob, with: .radialGradient(
+                    Gradient(colors: [tint.opacity(0.36), tint.opacity(0.10), tint.opacity(0)]),
+                    center: center, startRadius: 0, endRadius: max(width, radius)
+                ))
+            }
+
+            // Curved flowing glints / caustics run through all colors continuously.
+            for index in 0..<16 {
+                let normalized = CGFloat(index + 1) / 17
+                let baseY = surfaceY + fillHeight * normalized
+                var wave = Path()
+                for x in stride(from: CGFloat(0), through: w + 5, by: 7) {
+                    let y = baseY
+                        + sin(x / w * .pi * 2.2 + phase * 0.56 + CGFloat(index) * 0.71) * (8 + normalized * 12)
+                        + sin(x / w * .pi * 4.2 - phase * 0.3 + CGFloat(index)) * 4
+                    if x == 0 { wave.move(to: CGPoint(x: x, y: y)) }
+                    else { wave.addLine(to: CGPoint(x: x, y: y)) }
+                }
+                canvas.stroke(wave, with: .color(.white.opacity(index.isMultiple(of: 3) ? 0.28 : 0.11)),
+                              style: StrokeStyle(lineWidth: index.isMultiple(of: 3) ? 2.6 : 1.2,
+                                                 lineCap: .round))
+            }
+
+            // Bright crest at the surface, visible above the fluid gradient.
+            var crest = Path()
+            for x in stride(from: CGFloat(0), through: w + 5, by: 5) {
+                let y = surfaceY + 10
+                    + sin((x / w) * .pi * 2 + phase * 0.67) * 9
+                    + sin((x / w) * .pi * 4 - phase * 0.30) * 3
+                if x == 0 { crest.move(to: CGPoint(x: x, y: y)) }
+                else { crest.addLine(to: CGPoint(x: x, y: y)) }
+            }
+            canvas.stroke(crest, with: .color(.white.opacity(0.80)),
+                          style: StrokeStyle(lineWidth: 3.1, lineCap: .round))
+
+            // Bubbles ascend and restart at the bottom; confined to the fluid volume.
+            for index in bubblePositions.indices {
+                let radius = CGFloat(3 + (index % 5) * 2)
+                let velocity = 0.09 + Double(index % 5) * 0.024
+                let distance = (time * velocity + Double(index) * 0.237).truncatingRemainder(dividingBy: 1)
+                let x = w * bubblePositions[index] + sin(phase + CGFloat(index) * 2) * 7
+                let y = h - CGFloat(distance) * fillHeight
+                let bubble = Path(ellipseIn: CGRect(x: x-radius, y: y-radius, width: radius*2, height: radius*2))
+                canvas.fill(bubble, with: .color(.white.opacity(0.11)))
+                canvas.stroke(bubble, with: .color(.white.opacity(0.68)), lineWidth: 1.2)
+                let glint = Path(ellipseIn: CGRect(x:x-radius*0.42, y:y-radius*0.56,
+                                                  width:max(1,radius*0.34), height:max(1,radius*0.24)))
+                canvas.fill(glint, with: .color(.white.opacity(0.86)))
             }
         }
+        .accessibilityHidden(true)
+    }
+
+    private func fluidPath(width: CGFloat, height: CGFloat, surfaceY: CGFloat, phase: CGFloat) -> Path {
+        var path = Path()
+        let travel: CGFloat = 10
+        for x in stride(from: CGFloat(0), through: width + 5, by: 5) {
+            let y = surfaceY + travel
+                + sin(x / width * .pi * 2 + phase * 0.67) * 9
+                + sin(x / width * .pi * 4 - phase * 0.30) * 3
+            if x == 0 { path.move(to: CGPoint(x: x, y: y)) }
+            else { path.addLine(to: CGPoint(x: x, y: y)) }
+        }
+        path.addLine(to: CGPoint(x: width, y: height))
+        path.addLine(to: CGPoint(x: 0, y: height))
+        path.closeSubpath()
         return path
+    }
+
+    private func liquidStops() -> [Gradient.Stop] {
+        guard !layers.isEmpty else {
+            return [.init(color: Color(red: 0.52, green: 0.77, blue: 1), location: 0),
+                    .init(color: Palette.blue, location: 1)]
+        }
+        let occupied = max(0.001, layers.last!.endFraction)
+        var stops: [Gradient.Stop] = []
+        // Top is the most recently added drink; bottom is the earliest.
+        for layer in layers.reversed() {
+            let upper = 1 - (layer.endFraction / occupied)
+            let lower = 1 - (layer.startFraction / occupied)
+            let center = (upper + lower) / 2
+            let color = layer.kind.fluidTint
+            stops.append(.init(color: color, location: min(1, max(0, center))))
+        }
+        // Smooth continuous interpolation; no sharp color cut lines.
+        stops.insert(.init(color: layers.last!.kind.fluidTint.opacity(0.78), location: 0), at: 0)
+        stops.append(.init(color: layers.first!.kind.fluidTint.opacity(0.92), location: 1))
+        return stops
     }
 }
 
@@ -74,105 +192,54 @@ private struct GlassBottleBody: View {
     let phase: CGFloat
     let time: TimeInterval
 
-    private let bubbleX: [CGFloat] = [0.20, 0.37, 0.53, 0.69, 0.83, 0.28, 0.47, 0.76, 0.16, 0.60, 0.88, 0.33]
-
     var body: some View {
-        GeometryReader { geometry in
-            let w = geometry.size.width
-            let h = geometry.size.height
-            let filledFraction = layers.last?.endFraction ?? 0
-            let liquidHeight = h * filledFraction
+        ZStack {
+            BottleShape()
+                .fill(
+                    LinearGradient(colors: [
+                        Color(red: 0.91, green: 0.96, blue: 1).opacity(0.53),
+                        Color.white.opacity(0.11),
+                        Color(red: 0.84, green: 0.91, blue: 1).opacity(0.46)
+                    ], startPoint: .topLeading, endPoint: .bottomTrailing)
+                )
 
-            ZStack(alignment: .bottom) {
-                BottleShape()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.90, green: 0.95, blue: 1).opacity(0.54),
-                                Color.white.opacity(0.16),
-                                Color(red: 0.79, green: 0.88, blue: 1).opacity(0.52)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+            FluidVolume(layers: layers, phase: phase, time: time)
+                .clipShape(BottleShape())
 
-                // Each drink occupies only its own vertical portion.
-                // Previous liquids keep their colors as new drinks stack above them.
-                ForEach(layers) { layer in
-                    let bandHeight = h * (layer.endFraction - layer.startFraction)
-                    let baseOffset = h * layer.startFraction
-                    Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: layer.kind.liquidGradient,
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .frame(height: max(0, bandHeight))
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .offset(y: -baseOffset)
-                }
-
-                if liquidHeight > 2 {
-                    SurfaceLine(phase: phase)
-                        .stroke(.white.opacity(0.64), lineWidth: 2.0)
-                        .frame(height: 24)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .offset(y: -(liquidHeight - 12))
-
-                    // Bubbles rise through all drink layers and wrap to the bottom.
-                    ZStack {
-                        ForEach(0..<bubbleX.count, id: \.self) { index in
-                            let diameter = CGFloat(7 + (index % 5) * 3)
-                            let speed = 0.14 + Double(index % 4) * 0.045
-                            let rise = CGFloat(
-                                (time * speed + Double(index) * 0.17)
-                                    .truncatingRemainder(dividingBy: 1)
-                            )
-                            Circle()
-                                .fill(.white.opacity(0.14))
-                                .overlay {
-                                    Circle()
-                                        .stroke(.white.opacity(0.78), lineWidth: 1.4)
-                                }
-                                .frame(width: diameter, height: diameter)
-                                .position(
-                                    x: w * bubbleX[index] + sin(phase + CGFloat(index)) * 6,
-                                    y: liquidHeight * (1 - rise)
-                                )
-                        }
-                    }
-                    .frame(width: w, height: liquidHeight)
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                }
-
+            // Two large soft specular sweeps, stronger inner and outer glass rims.
+            GeometryReader { geometry in
+                let w = geometry.size.width
+                let h = geometry.size.height
                 Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [.white.opacity(0.76), .white.opacity(0.02)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: w * 0.05, height: h * 0.46)
+                    .fill(LinearGradient(colors: [.white.opacity(0.88), .white.opacity(0.09)],
+                                         startPoint: .top, endPoint: .bottom))
+                    .frame(width: w * 0.056, height: h * 0.42)
                     .rotationEffect(.degrees(7))
-                    .position(x: w * 0.14, y: h * 0.48)
-
+                    .position(x: w * 0.15, y: h * 0.45)
                 Capsule()
-                    .fill(.white.opacity(0.27))
-                    .frame(width: w * 0.025, height: h * 0.32)
+                    .fill(.white.opacity(0.26))
+                    .frame(width: w * 0.023, height: h * 0.27)
                     .rotationEffect(.degrees(-7))
-                    .position(x: w * 0.88, y: h * 0.49)
+                    .position(x: w * 0.88, y: h * 0.48)
             }
             .clipShape(BottleShape())
-            .overlay {
-                BottleShape()
-                    .stroke(Palette.bottleStroke.opacity(0.90), lineWidth: 2.6)
-            }
-            .shadow(color: Palette.navy.opacity(0.10), radius: 14, y: 7)
+
+            BottleShape()
+                .stroke(
+                    LinearGradient(colors: [
+                        Color.white.opacity(0.98),
+                        Color(red: 0.47, green: 0.68, blue: 0.99).opacity(0.58),
+                        Color.white.opacity(0.98),
+                        Color(red: 0.40, green: 0.60, blue: 0.96).opacity(0.65)
+                    ], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 5.0
+                )
+
+            BottleShape()
+                .stroke(.white.opacity(0.78), lineWidth: 1.5)
+                .scaleEffect(x: 0.984, y: 0.993)
         }
+        .shadow(color: Palette.blue.opacity(0.12), radius: 15, y: 8)
     }
 }
 
@@ -206,6 +273,33 @@ private struct CompletedMascot: View {
     }
 }
 
+
+// A translucent near-field water wrap around the shoes and lower legs.
+// It fades naturally into the continuous volume behind the figure.
+private struct MascotWaterWrap: View {
+    let phase: CGFloat
+
+    var body: some View {
+        Canvas { context, size in
+            let w = size.width
+            let h = size.height
+            for index in 0..<5 {
+                var swirl = Path()
+                let yy = h * (0.76 + CGFloat(index) * 0.025)
+                for x in stride(from: CGFloat(0), through: w + 4, by: 5) {
+                    let y = yy + sin((x / w) * .pi * 2.1 + phase * 0.70 + CGFloat(index)) * 11
+                    if x == 0 { swirl.move(to: CGPoint(x: x, y: y)) }
+                    else { swirl.addLine(to: CGPoint(x: x, y: y)) }
+                }
+                context.stroke(swirl, with: .color(.white.opacity(0.28 - Double(index) * 0.033)),
+                               style: StrokeStyle(lineWidth: index == 0 ? 3.4 : 2.2, lineCap: .round))
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 struct HomeView: View {
     @EnvironmentObject private var store: HydrationStore
     let onAdd: () -> Void
@@ -234,6 +328,12 @@ struct HomeView: View {
                         CompletedMascot(size: mascotSize)
                             .position(x: w / 2, y: h * 0.52)
                             .accessibilityHidden(true)
+
+                        if store.progressToday > 0.26 {
+                            MascotWaterWrap(phase: phase)
+                                .clipShape(BottleShape())
+                                .allowsHitTesting(false)
+                        }
 
                         VStack(spacing: 6) {
                             HStack(alignment: .firstTextBaseline, spacing: 8) {

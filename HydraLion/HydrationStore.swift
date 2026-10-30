@@ -41,6 +41,18 @@ enum DrinkKind: String, Codable, CaseIterable, Identifiable {
     }
     var soft: Color { accent.opacity(0.09) }
 
+    // Rich reference-inspired colors for one uninterrupted animated fluid.
+    var fluidTint: Color {
+        switch self {
+        case .water: return Color(red: 0.25, green: 0.63, blue: 0.99)
+        case .juice: return Color(red: 0.98, green: 0.59, blue: 0.11)
+        case .tea: return Color(red: 0.84, green: 0.72, blue: 0.52)
+        case .milk: return Color(red: 0.93, green: 0.96, blue: 1.00)
+        case .coffee: return Color(red: 0.36, green: 0.22, blue: 0.15)
+        }
+    }
+
+
     // Last drink of today determines the liquid tint shown in the glass bottle.
     var liquidGradient: [Color] {
         switch self {
