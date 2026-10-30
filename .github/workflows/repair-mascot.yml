@@ -26,8 +26,11 @@ jobs:
           from pathlib import Path
           src=Path('HydraLion/Assets.xcassets/MascotIdle.imageset/MascotIdle.png')
           image=Image.open(src).convert('RGBA')
-          # Keep the actual hand-drawn character unchanged. Its current alpha
-          # bounding box touches the bottom edge, producing visible cut-off feet.
+          # Normalize, rather than accumulate padding if an earlier job ran.
+          alpha=image.getchannel('A')
+          bounding=alpha.point(lambda v: 255 if v>180 else 0).getbbox()
+          if bounding is not None:
+              image=image.crop(bounding)
           left,top,right,bottom=64,32,64,180
           canvas=Image.new('RGBA',(image.width+left+right,image.height+top+bottom),(0,0,0,0))
           canvas.alpha_composite(image,(left,top))
