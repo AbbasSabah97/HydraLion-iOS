@@ -135,7 +135,7 @@ private struct FluidVolume: View {
         let w = size.width
         let h = size.height
         for index in bubblePositions.indices {
-            let radius = CGFloat(2.8 + (index % 5) * 1.55)
+            let radius: CGFloat = 2.8 + CGFloat(index % 5) * 1.55
             // Each bubble rises at a slightly different speed and wraps below the
             // surface; it never reverses or resets the animation timeline.
             let velocity = 0.075 + Double(index % 6) * 0.019
