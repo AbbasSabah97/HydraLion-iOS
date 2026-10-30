@@ -1,0 +1,82 @@
+name: Repair white patch under mascot shoes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-white-shoe-patch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clean-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Remove opaque white wedge under shoes and preserve soles
+        run: |
+          python -m pip install --quiet pillow numpy
+          python - <<'PY'
+          from PIL import Image
+          import numpy as np
+          from pathlib import Path
+          asset = Path('HydraLion/Assets.xcassets/MascotIdle.imageset/MascotIdle.png')
+          image = Image.open(asset).convert('RGBA')
+          array = np.array(image)
+          alpha = array[:,:,3]
+
+          # Normalize away any previous transparent padding. The correction is
+          # relative to the character art rather than the outer PNG canvas.
+          bounds = Image.fromarray(alpha).point(lambda a: 255 if a > 45 else 0).getbbox()
+          assert bounds is not None
+          cropped = image.crop(bounds)
+          rgba = np.array(cropped)
+          h, w = rgba.shape[:2]
+          y,x = np.ogrid[:h,:w]
+          dx = np.abs(x - w * 0.495) / (w * 0.145)
+
+          # Cut only the unnatural light bridge running below the two shoes.
+          # The curved, feathered boundary follows their rounded undersides,
+          # leaving both shoe tips and their white/blue leather visible.
+          threshold = h * (0.947 + 0.048 * np.minimum(1, dx ** 1.25))
+          vertical_fade = np.clip((y - threshold) / (h * 0.012),0,1)
+          horizontal_fade = np.clip((1.04-dx)/0.05,0,1)
+          fade = vertical_fade * horizontal_fade
+          rgba[:,:,3] = np.rint(rgba[:,:,3] * (1-fade)).clip(0,255).astype(np.uint8)
+
+          cleaned = Image.fromarray(rgba, 'RGBA')
+          result = Image.new('RGBA', (w+60,h+104),(0,0,0,0))
+          result.alpha_composite(cleaned,(30,25))
+          result.save(asset,'PNG',optimize=True,compress_level=9)
+
+          # Verifiable test of the cleaned edge, not just an extra transparent margin.
+          aa = np.array(result.getchannel('A'))
+          y0 = 25 + int(h*0.992)
+          x0 = 30 + int(w*0.495)
+          assert aa[y0,x0] < 20, 'Center under the shoes is not transparent'
+          assert np.max(aa[25:int(h*0.78)+25,:]) > 240, 'Mascot was accidentally erased'
+          assert aa[-1,:].max() == 0
+          print('Completed mascot alpha repair:', result.size, 'center alpha:',aa[y0,x0])
+          PY
+      - name: Commit actual PNG cleanup
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add HydraLion/Assets.xcassets/MascotIdle.imageset/MascotIdle.png
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No image changes detected'
+            exit 0
+          fi
+          git commit -m "Remove opaque white patch beneath mascot shoes"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main

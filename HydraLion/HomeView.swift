@@ -105,8 +105,8 @@ private struct FluidVolume: View {
             var mist = context
             mist.addFilter(.blur(radius: 27))
             let light = index.isMultiple(of: 2)
-                ? Color.white.opacity(0.14)
-                : Color(red: 0.43, green: 0.78, blue: 1.0).opacity(0.12)
+                ? Color(red: 0.70, green: 0.89, blue: 1.0).opacity(0.09)
+                : Color(red: 0.25, green: 0.66, blue: 0.95).opacity(0.11)
             mist.fill(Path(ellipseIn: region),
                       with: .radialGradient(Gradient(colors: [light,.clear]),
                                             center: center,startRadius: 0,endRadius: spread*0.58))
@@ -177,10 +177,10 @@ private struct FluidVolume: View {
         // Physically softer transparent blue: depth increases smoothly toward
         // the bottle floor; the water is never an opaque painted shape.
         [
-            .init(color: Color(red: 0.83, green: 0.95, blue: 1.00).opacity(0.26), location: 0.00),
-            .init(color: Color(red: 0.61, green: 0.85, blue: 1.00).opacity(0.43), location: 0.21),
-            .init(color: Color(red: 0.37, green: 0.71, blue: 0.98).opacity(0.59), location: 0.66),
-            .init(color: Color(red: 0.25, green: 0.59, blue: 0.94).opacity(0.72), location: 1.00)
+            .init(color: Color(red: 0.34, green: 0.73, blue: 0.98).opacity(0.80), location: 0.00),
+            .init(color: Color(red: 0.24, green: 0.65, blue: 0.96).opacity(0.85), location: 0.24),
+            .init(color: Color(red: 0.13, green: 0.52, blue: 0.89).opacity(0.91), location: 0.63),
+            .init(color: Color(red: 0.05, green: 0.35, blue: 0.74).opacity(0.98), location: 1.00)
         ]
     }
 }
