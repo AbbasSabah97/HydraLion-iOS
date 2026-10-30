@@ -15,6 +15,12 @@ on:
       - '.github/workflows/ios-ipa.yml'
   workflow_dispatch:
 
+# Keep only the newest build in the queue for each branch.
+# A rapid series of updates must not accumulate duplicate macOS builds.
+concurrency:
+  group: hydralion-ios-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
