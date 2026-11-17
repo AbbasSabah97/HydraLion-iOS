@@ -105,7 +105,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -685,7 +684,7 @@ private fun EditEntryDialog(entry: DrinkEntry, onDismiss: () -> Unit, onSave: (I
         text = {
             Column {
                 Text(if (LocalConfiguration.current.locales[0].language.startsWith("ar")) entry.kind.titleAr else entry.kind.titleEn)
-                OutlinedTextField(value = amount, onValueChange = { amount = it.filter(Char::isDigit).take(4) }, label = { Text(tx("Amount (ml)", "الكمية (مل)") }) )
+                OutlinedTextField(value = amount, onValueChange = { amount = it.filter(Char::isDigit).take(4) }, label = { Text(tx("Amount (ml)", "الكمية (مل)")) })
             }
         },
         confirmButton = {
@@ -843,7 +842,7 @@ private fun TimeSettingRow(title: String, minutes: Int, onSelect: (Int) -> Unit)
                 { _, hour, minute -> onSelect(hour * 60 + minute) },
                 calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE),
-                DateFormat.is24HourFormat(context)
+                android.text.format.DateFormat.is24HourFormat(context)
             ).show()
         }.padding(horizontal = 18.dp, vertical = 17.dp),
         verticalAlignment = Alignment.CenterVertically
