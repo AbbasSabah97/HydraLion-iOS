@@ -14,14 +14,13 @@ import java.util.UUID
 enum class DrinkKind(
     val titleEn: String,
     val titleAr: String,
-    val emoji: String,
     val color: Long
 ) {
-    WATER("Water", "الماء", "💧", 0xFF378FE8),
-    TEA("Green Tea", "الشاي الأخضر", "🍵", 0xFF4C9B62),
-    COFFEE("Coffee", "القهوة", "☕", 0xFF805033),
-    JUICE("Orange Juice", "العصير", "🍊", 0xFFF39A28),
-    MILK("Milk", "الحليب", "🥛", 0xFF9CB8E8)
+    WATER("Water", "الماء", 0xFF378FE8),
+    TEA("Tea", "الشاي", 0xFF4C9B62),
+    COFFEE("Coffee", "القهوة", 0xFF805033),
+    JUICE("Juice", "العصير", 0xFFF39A28),
+    MILK("Milk", "الحليب", 0xFF9CB8E8)
 }
 
 data class DrinkEntry(
