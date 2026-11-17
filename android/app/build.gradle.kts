@@ -1,5 +1,3 @@
-import java.net.URL
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -29,41 +27,34 @@ android {
     }
 }
 
-// The Android build packages the exact transparent mascot PNGs and app icon
-// from the companion iOS project. They are downloaded at build time and are
-// bundled into the APK, so the installed app works completely offline.
-val hydraAssetBase = "https://raw.githubusercontent.com/AbbasSabah97/HydraLion-iOS/main/HydraLion/Assets.xcassets"
+// Reuse the exact original transparent mascot and app icon from the iOS asset catalog.
+val iosAssets = rootProject.projectDir.parentFile.resolve("HydraLion/Assets.xcassets")
 val hydraAssets = mapOf(
-    "app_icon.png" to "$hydraAssetBase/AppIcon.appiconset/AppIcon.png",
-    "mascot_idle.png" to "$hydraAssetBase/MascotIdle.imageset/MascotIdle.png",
-    "mascot_blink.png" to "$hydraAssetBase/MascotBlink.imageset/MascotBlink.png",
-    "mascot_drink.png" to "$hydraAssetBase/MascotDrink.imageset/MascotDrink.png",
-    "mascot_cheers.png" to "$hydraAssetBase/MascotCheers.imageset/MascotCheers.png",
-    "mascot_surprised.png" to "$hydraAssetBase/MascotSurprised.imageset/MascotSurprised.png",
-    "mascot_relax.png" to "$hydraAssetBase/MascotRelax.imageset/MascotRelax.png"
+    "app_icon.png" to iosAssets.resolve("AppIcon.appiconset/AppIcon.png"),
+    "mascot_idle.png" to iosAssets.resolve("MascotIdle.imageset/MascotIdle.png"),
+    "mascot_blink.png" to iosAssets.resolve("MascotBlink.imageset/MascotBlink.png"),
+    "mascot_drink.png" to iosAssets.resolve("MascotDrink.imageset/MascotDrink.png"),
+    "mascot_cheers.png" to iosAssets.resolve("MascotCheers.imageset/MascotCheers.png"),
+    "mascot_surprised.png" to iosAssets.resolve("MascotSurprised.imageset/MascotSurprised.png"),
+    "mascot_relax.png" to iosAssets.resolve("MascotRelax.imageset/MascotRelax.png")
 )
 
-val downloadHydraAssets = tasks.register("downloadHydraAssets") {
-    val outputFiles = hydraAssets.keys.map { layout.projectDirectory.file("src/main/res/drawable-nodpi/$it") }
+val copyHydraAssets = tasks.register("copyHydraAssets") {
+    val outputFiles = hydraAssets.keys.map { layout.projectDirectory.file("src/main/res/drawable-nodpi/" + it) }
+    inputs.files(hydraAssets.values)
     outputs.files(outputFiles)
     doLast {
         val destination = layout.projectDirectory.dir("src/main/res/drawable-nodpi").asFile
         destination.mkdirs()
-        hydraAssets.forEach { (name, url) ->
-            val target = destination.resolve(name)
-            if (!target.exists() || target.length() < 1024L) {
-                logger.lifecycle("Downloading HydraLion asset: $name")
-                val connection = URL(url).openConnection()
-                connection.connectTimeout = 30000
-                connection.readTimeout = 60000
-                connection.getInputStream().use { input -> target.outputStream().use { output -> input.copyTo(output) } }
-                check(target.length() > 1024L) { "Asset download failed: $name" }
-            }
+        hydraAssets.forEach { (name, source) ->
+            check(source.exists() && source.length() > 1024L) { "Missing original iOS asset: " + source.absolutePath }
+            source.copyTo(destination.resolve(name), overwrite = true)
+            logger.lifecycle("Bundled original HydraLion asset: " + name)
         }
     }
 }
 tasks.configureEach {
-    if (name == "preBuild") dependsOn(downloadHydraAssets)
+    if (name == "preBuild") dependsOn(copyHydraAssets)
 }
 
 dependencies {
