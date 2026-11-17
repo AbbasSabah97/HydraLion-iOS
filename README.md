@@ -40,4 +40,4 @@ This environment cannot run Apple's `xcodebuild` because it is Linux. GitHub Act
 
 ## Android companion
 
-A native Kotlin/Jetpack Compose Android edition is being developed in the `android/` directory. It targets Android 11 (API 30), reuses the exact iOS app icon and mascot PNG assets, and includes Home, Add Drink, History, Water Reminder, Reminders, offline storage and local notifications. See [Android build instructions](android/README.md) and the [Android APK workflow](.github/workflows/android-apk.yml).
+A native Kotlin/Jetpack Compose Android edition is included in the `android/` directory. It targets Android 11 (API 30), reuses the exact iOS app icon and mascot PNG assets, and includes Home, Add Drink, History, Water Reminder, Reminders, offline storage and local notifications. See [Android build instructions](android/README.md) and the [Android APK workflow](.github/workflows/android-apk.yml).
