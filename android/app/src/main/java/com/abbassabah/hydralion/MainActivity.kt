@@ -9,12 +9,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,6 +43,8 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -79,6 +75,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -275,7 +273,12 @@ private fun BottomNavigationBar(selected: AppTab, onSelect: (AppTab) -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         when (tab) {
-                            AppTab.HOME -> Text("💧", fontSize = 24.sp)
+                            AppTab.HOME -> Icon(
+                                painter = painterResource(if (active) R.drawable.ic_water_drop else R.drawable.ic_water_drop_outline),
+                                contentDescription = tx("Home", "الرئيسية"),
+                                tint = if (active) HydraWhite else HydraNavy.copy(alpha = .78f),
+                                modifier = Modifier.size(25.dp)
+                            )
                             AppTab.HISTORY -> Icon(Icons.Filled.History, null, tint = if (active) HydraWhite else HydraNavy.copy(alpha = .78f), modifier = Modifier.size(25.dp))
                             AppTab.PROGRESS -> Icon(Icons.Filled.BarChart, null, tint = if (active) HydraWhite else HydraNavy.copy(alpha = .78f), modifier = Modifier.size(25.dp))
                             AppTab.REMINDERS -> Icon(Icons.Filled.Notifications, null, tint = if (active) HydraWhite else HydraNavy.copy(alpha = .78f), modifier = Modifier.size(25.dp))
@@ -350,19 +353,16 @@ private fun ImageAsset(resource: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun BottleCanvas(progress: Float, modifier: Modifier = Modifier) {
-    val animation = rememberInfiniteTransition(label = "bottle-animation")
-    val phase by animation.animateFloat(
-        initialValue = 0f,
-        targetValue = (2f * PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(9200, easing = LinearEasing), repeatMode = RepeatMode.Restart),
-        label = "water-wave"
-    )
-    val bubblePhase by animation.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(14500, easing = LinearEasing), repeatMode = RepeatMode.Restart),
-        label = "rising-bubbles"
-    )
+    // A frame-clock based timeline mirrors the iOS TimelineView: it never
+    // restarts at the end of a short animation cycle.
+    val elapsedSeconds by produceState(initialValue = 0.0) {
+        val startNanos = withFrameNanos { it }
+        while (true) {
+            val frameNanos = withFrameNanos { it }
+            value = (frameNanos - startNanos) / 1_000_000_000.0
+        }
+    }
+
     Canvas(modifier) {
         val w = size.width
         val h = size.height
@@ -385,51 +385,97 @@ private fun BottleCanvas(progress: Float, modifier: Modifier = Modifier) {
                 end = Offset(w, h)
             )
         )
+
         val fill = progress.coerceIn(0f, 1f)
         if (fill > .005f) {
-            val surfaceY = h * (1f - fill)
+            val waterHeight = h * fill
+            val surfaceY = h - waterHeight
+
+            // Two differently shaped wave components create the same soft,
+            // natural, counter-flowing surface used by the iOS bottle.
+            fun waveY(x: Float): Float {
+                val normalizedX = x.toDouble() / w.toDouble()
+                val broadWave = sin(normalizedX * 2.0 * PI + elapsedSeconds * 0.49) * 9.dp.toPx()
+                val smallWave = sin(normalizedX * 3.7 * PI - elapsedSeconds * 0.32 + 0.8) * 4.dp.toPx()
+                return surfaceY + 8.dp.toPx() + broadWave.toFloat() + smallWave.toFloat()
+            }
+
             val water = Path().apply {
-                for (i in 0..100) {
-                    val x = w * i / 100f
-                    val y = surfaceY + sin((x / w) * 2f * PI + phase * .52f).toFloat() * 7.dp.toPx() +
-                        sin((x / w) * 3.7f * PI - phase * .34f + .7f).toFloat() * 3.dp.toPx()
+                for (i in 0..120) {
+                    val x = w * i / 120f
+                    val y = waveY(x)
                     if (i == 0) moveTo(x, y) else lineTo(x, y)
                 }
                 lineTo(w, h)
                 lineTo(0f, h)
                 close()
             }
+
             clipPath(bottle) {
                 drawPath(
                     water,
                     Brush.verticalGradient(
-                        listOf(Color(0xFF4FA8EF).copy(alpha = .86f), Color(0xFF2D8DDD).copy(alpha = .91f), Color(0xFF176BBE).copy(alpha = .97f)),
+                        listOf(
+                            Color(0xFF4FA8EF).copy(alpha = .86f),
+                            Color(0xFF2D8DDD).copy(alpha = .91f),
+                            Color(0xFF176BBE).copy(alpha = .97f)
+                        ),
                         startY = surfaceY,
                         endY = h
                     )
                 )
+
                 val surface = Path().apply {
-                    for (i in 0..100) {
-                        val x = w * i / 100f
-                        val y = surfaceY + sin((x / w) * 2f * PI + phase * .52f).toFloat() * 7.dp.toPx() +
-                            sin((x / w) * 3.7f * PI - phase * .34f + .7f).toFloat() * 3.dp.toPx()
+                    for (i in 0..120) {
+                        val x = w * i / 120f
+                        val y = waveY(x)
                         if (i == 0) moveTo(x, y) else lineTo(x, y)
                     }
                 }
-                drawPath(surface, Color.White.copy(alpha = .44f), style = Stroke(width = 1.3.dp.toPx(), cap = StrokeCap.Round))
-                for (i in 0 until 18) {
-                    val xRatio = listOf(.12f, .23f, .34f, .46f, .58f, .69f, .80f, .88f, .18f, .39f, .53f, .74f, .29f, .63f, .84f, .44f, .16f, .77f)[i]
-                    val radius = (2.3f + (i % 5) * 1.25f) * density
-                    val travel = (bubblePhase + i * .173f) % 1f
-                    val y = h - travel * (h - surfaceY)
-                    val fade = ((y - surfaceY) / (22.dp.toPx())).coerceIn(0f, 1f)
-                    val driftX = sin(phase * .55f + i * 1.7f).toFloat() * 4.dp.toPx()
+
+                // A diffused highlight and a fine specular edge, not parallel
+                // decorative lines, give the water surface a softer glassy look.
+                drawPath(
+                    surface,
+                    Color.White.copy(alpha = .15f),
+                    style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round)
+                )
+                drawPath(
+                    surface,
+                    Color.White.copy(alpha = .52f),
+                    style = Stroke(width = 1.15.dp.toPx(), cap = StrokeCap.Round)
+                )
+
+                val bubblePositions = listOf(
+                    .12f, .23f, .34f, .46f, .58f, .69f, .80f, .88f,
+                    .18f, .39f, .53f, .74f, .29f, .63f, .84f, .44f, .16f, .77f
+                )
+                for (i in bubblePositions.indices) {
+                    val radius = (2.8f + (i % 5) * 1.55f) * density
+                    val velocity = 0.075 + (i % 6) * 0.019
+                    // Each bubble rises at its own speed and wraps below the
+                    // surface, so it never reverses direction or resets in place.
+                    val distance = ((elapsedSeconds * velocity + i * 0.217) % 1.0).toFloat()
+                    val x = w * bubblePositions[i] +
+                        sin(elapsedSeconds * 0.62 + i * 1.81).toFloat() * 5.dp.toPx()
+                    val y = h - distance * waterHeight
+                    val fade = ((y - surfaceY) / 22.dp.toPx()).coerceIn(0f, 1f)
                     if (y > surfaceY + 3.dp.toPx()) {
-                        drawCircle(Color.White.copy(alpha = .07f * fade), radius, Offset(w * xRatio + driftX, y))
-                        drawCircle(Color.White.copy(alpha = .58f * fade), radius, Offset(w * xRatio + driftX, y), style = Stroke(width = 1.1.dp.toPx()))
-                        drawCircle(Color.White.copy(alpha = .72f * fade), radius * .20f, Offset(w * xRatio + driftX - radius * .28f, y - radius * .36f))
+                        drawCircle(Color.White.copy(alpha = .07f * fade), radius, Offset(x, y))
+                        drawCircle(
+                            Color.White.copy(alpha = .62f * fade),
+                            radius,
+                            Offset(x, y),
+                            style = Stroke(width = 1.1.dp.toPx())
+                        )
+                        drawCircle(
+                            Color.White.copy(alpha = .74f * fade),
+                            radius * .20f,
+                            Offset(x - radius * .28f, y - radius * .36f)
+                        )
                     }
                 }
+
                 drawRoundRect(
                     Brush.verticalGradient(listOf(Color.White.copy(alpha = .36f), Color.White.copy(alpha = .015f))),
                     topLeft = Offset(w * .105f, h * .23f),
@@ -444,12 +490,51 @@ private fun BottleCanvas(progress: Float, modifier: Modifier = Modifier) {
                 )
             }
         }
+
         drawPath(
             bottle,
-            Brush.linearGradient(listOf(Color.White.copy(alpha = .98f), Color(0xFF82A9F1).copy(alpha = .70f), Color.White.copy(alpha = .94f))),
+            Brush.linearGradient(
+                listOf(Color.White.copy(alpha = .98f), Color(0xFF82A9F1).copy(alpha = .70f), Color.White.copy(alpha = .94f))
+            ),
             style = Stroke(width = 4.5.dp.toPx())
         )
         drawPath(bottle, Color.White.copy(alpha = .74f), style = Stroke(width = 1.2.dp.toPx()))
+    }
+}
+
+@Composable
+private fun DrinkKindIcon(kind: DrinkKind, tint: Color, modifier: Modifier = Modifier) {
+    when (kind) {
+        DrinkKind.WATER -> Icon(
+            painter = painterResource(R.drawable.ic_water_drop_outline),
+            contentDescription = tx("Water", "الماء"),
+            tint = tint,
+            modifier = modifier
+        )
+        DrinkKind.TEA -> Icon(
+            Icons.Filled.LocalCafe,
+            contentDescription = tx("Tea", "الشاي"),
+            tint = tint,
+            modifier = modifier
+        )
+        DrinkKind.COFFEE -> Icon(
+            Icons.Filled.LocalCafe,
+            contentDescription = tx("Coffee", "القهوة"),
+            tint = tint,
+            modifier = modifier
+        )
+        DrinkKind.JUICE -> Icon(
+            painter = painterResource(R.drawable.ic_water_drop),
+            contentDescription = tx("Juice", "العصير"),
+            tint = tint,
+            modifier = modifier
+        )
+        DrinkKind.MILK -> Icon(
+            Icons.Filled.Waves,
+            contentDescription = tx("Milk", "الحليب"),
+            tint = tint,
+            modifier = modifier
+        )
     }
 }
 
@@ -480,7 +565,11 @@ private fun AddDrinkScreen(onBack: () -> Unit, onGoal: () -> Unit, onAdd: (Drink
                                 .background(if (active) HydraBlue else Color(drink.color).copy(alpha = .12f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(drink.emoji, fontSize = 25.sp)
+                            DrinkKindIcon(
+                                drink,
+                                tint = if (active) HydraWhite else Color(drink.color),
+                                modifier = Modifier.size(27.dp)
+                            )
                         }
                         Text(
                             if (LocalConfiguration.current.locales[0].language.startsWith("ar")) drink.titleAr else drink.titleEn,
@@ -647,7 +736,7 @@ private fun HistoryEntryCard(entry: DrinkEntry, onEdit: () -> Unit, onDelete: ()
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.size(48.dp).clip(CircleShape).background(Color(entry.kind.color).copy(alpha = .13f)), contentAlignment = Alignment.Center) {
-            Text(entry.kind.emoji, fontSize = 23.sp)
+            DrinkKindIcon(entry.kind, tint = Color(entry.kind.color), modifier = Modifier.size(25.dp))
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
