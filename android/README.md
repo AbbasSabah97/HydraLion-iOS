@@ -15,8 +15,8 @@ The APK is a native Android app, not a web wrapper.
 
 ## Features
 
-- Glass-style bottle home screen with continuous animated water surface and rising bubbles.
-- Original transparent mascot artwork and the exact iOS AppIcon.
+- Glass-style bottle home screen with a frame-clock-driven continuous water surface and individually rising bubbles; the wave timeline does not restart at a fixed interval.
+- Original transparent mascot artwork and the exact iOS AppIcon; iOS-style vector drink icons with corrected Tea, Juice, Milk and Water labels.
 - Add water, green tea, coffee, orange juice and milk; serving presets and a persistent celebration state.
 - History with day, 7-day and 30-day views, edit and delete.
 - Progress ring, consumed amount, remaining amount and configurable daily goal.
@@ -40,7 +40,7 @@ Output:
 
 `android/app/build/outputs/apk/debug/app-debug.apk`
 
-GitHub Actions builds the APK automatically. Open the Actions tab and download the `HydraLion-Android-v1.0.0` artifact.
+GitHub Actions builds the APK automatically. Open the Actions tab and download the `HydraLion-Android-v1.0.1` artifact.
 
 ## MIUI notification setup
 
