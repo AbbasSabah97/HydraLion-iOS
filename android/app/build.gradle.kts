@@ -1,3 +1,5 @@
+import java.net.URL
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -51,7 +53,7 @@ val downloadHydraAssets = tasks.register("downloadHydraAssets") {
             val target = destination.resolve(name)
             if (!target.exists() || target.length() < 1024L) {
                 logger.lifecycle("Downloading HydraLion asset: $name")
-                val connection = java.net.URL(url).openConnection()
+                val connection = URL(url).openConnection()
                 connection.connectTimeout = 30000
                 connection.readTimeout = 60000
                 connection.getInputStream().use { input -> target.outputStream().use { output -> input.copyTo(output) } }
