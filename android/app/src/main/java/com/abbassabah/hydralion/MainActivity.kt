@@ -195,6 +195,7 @@ private fun HydraLionApp(state: HydrationState, vm: HydrationViewModel) {
                 if (showAdd) {
                     AddDrinkScreen(
                         onBack = { showAdd = false },
+                        onGoal = { showGoal = true },
                         onAdd = { kind, amount -> vm.addDrink(kind, amount) }
                     )
                 } else {
@@ -454,12 +455,12 @@ private fun BottleCanvas(progress: Float, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AddDrinkScreen(onBack: () -> Unit, onAdd: (DrinkKind, Int) -> Unit) {
+private fun AddDrinkScreen(onBack: () -> Unit, onGoal: () -> Unit, onAdd: (DrinkKind, Int) -> Unit) {
     var kind by rememberSaveable { mutableStateOf(DrinkKind.WATER) }
     var amount by rememberSaveable { mutableIntStateOf(250) }
     var didAdd by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().background(HydraWhite)) {
-        Header(tx("Add Drink", "إضافة مشروب"), onBack = onBack, onGoal = {})
+        Header(tx("Add Drink", "إضافة مشروب"), onBack = onBack, onGoal = onGoal)
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
